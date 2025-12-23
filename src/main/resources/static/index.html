@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeamSync | 敏捷协同平台</title>
+    <!-- CDN 资源 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    <style>
+        body { margin: 0; font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', sans-serif; background-color: #f5f7fa; }
+        #app { height: 100vh; }
+        .login-container { height: 100%; display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .login-card { width: 400px; padding: 20px; border-radius: 12px; }
+        .main-layout { height: 100%; }
+        .aside { background-color: #304156; color: white; width: 240px; }
+        .header { background-color: white; border-bottom: 1px solid #dcdfe6; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 20px; }
+        .project-card { cursor: pointer; transition: all 0.3s; }
+        .project-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+        .kanban-container { display: flex; gap: 20px; padding: 20px; height: calc(100vh - 120px); overflow-x: auto; }
+        .kanban-column { background-color: #ebedf0; border-radius: 8px; width: 350px; flex-shrink: 0; display: flex; flex-direction: column; }
+        .column-header { padding: 15px; font-weight: bold; font-size: 16px; border-bottom: 1px solid #dcdfe6; display: flex; justify-content: space-between; }
+        .task-list { padding: 10px; flex: 1; overflow-y: auto; }
+        .task-item { background: white; padding: 15px; border-radius: 6px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .task-item:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .user-info { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 登录注册模块 -->
+        <div v-if="!isLoggedIn" class="login-container">
+            <el-card class="login-card">
+                <template #header>
+                    <div style="text-align: center; font-size: 24px; font-weight: bold; color: #409EFF;">TeamSync</div>
+                </template>
+                <el-tabs v-model="activeTab">
+                    <el-tab-pane label="登录" name="login">
+                        <el-form :model="loginForm" label-position="top">
+                            <el-form-item label="用户名">
+                                <el-input v-model="loginForm.username" placeholder="请输入用户名"></el-input>
+                            </el-form-item>
+                            <el-form-item label="密码">
+                                <el-input v-model="loginForm.password" type="password" placeholder="请输入密码"></el-input>
+                            </el-form-item>
+                            <el-button type="primary" style="width: 100%;" @click="handleLogin" :loading="loading">立即登录</el-button>
+                        </el-form>
+                    </el-tab-pane>
+                    <el-tab-pane label="注册" name="register">
+                        <el-form :model="registerForm" label-position="top">
+                            <el-form-item label="用户名">
+                                <el-input v-model="registerForm.username" placeholder="4-20位字符"></el-input>
+                            </el-form-item>
+                            <el-form-item label="邮箱">
+                                <el-input v-model="registerForm.email" placeholder="example@qq.com"></el-input>
+                            </el-form-item>
+                            <el-form-item label="密码">
+                                <el-input v-model="registerForm.password" type="password" placeholder="6-20位字符"></el-input>
+                            </el-form-item>
+                            <el-button type="success" style="width: 100%;" @click="handleRegister" :loading="loading">注册并登录</el-button>
+                        </el-form>
+                    </el-tab-pane>
+                </el-tabs>
+            </el-card>
+        </div>
+
+        <!-- 主界面模块 -->
+        <el-container v-else class="main-layout">
+            <el-aside class="aside">
+                <div style="padding: 20px; font-size: 20px; font-weight: bold; border-bottom: 1px solid #1f2d3d;">TeamSync</div>
+                <el-menu background-color="#304156" text-color="#fff" active-text-color="#409EFF" default-active="1">
+                    <el-menu-item index="1" @click="currentView = 'projects'">
+                        <el-icon><grid /></el-icon>
+                        <span>项目大厅</span>
+                    </el-menu-item>
+                </el-menu>
+            </el-aside>
+            
+            <el-container>
+                <el-header class="header">
+                    <div>
+                        <el-breadcrumb separator="/">
+                            <el-breadcrumb-item @click="currentView = 'projects'">项目中心</el-breadcrumb-item>
+                            <el-breadcrumb-item v-if="currentView === 'board'">{{ currentProject.name }}</el-breadcrumb-item>
+                        </el-breadcrumb>
+                    </div>
+                    <div class="user-info">
+                        <el-dropdown @command="handleCommand">
+                            <span class="el-dropdown-link">
+                                <el-avatar :size="32" :src="userInfo.avatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'"></el-avatar>
+                                <span style="margin-left: 8px;">{{ userInfo.username }}</span>
+                            </span>
+                            <template #header></template>
+                            <template #dropdown>
+                                <el-dropdown-menu>
+                                    <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
+                    </div>
+                </el-header>
+
+                <el-main style="padding: 0;">
+                    <!-- 项目列表页 -->
+                    <div v-if="currentView === 'projects'">
+                        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                            <h2 style="margin: 0;">我的项目</h2>
+                            <el-button type="primary" @click="showProjectDialog = true">创建新项目</el-button>
+                        </div>
+                        <div class="project-grid">
+                            <el-card v-for="p in projects" :key="p.id" class="project-card" @click="enterProject(p)">
+                                <h3>{{ p.name }}</h3>
+                                <p style="color: #909399; font-size: 14px;">{{ p.description || '暂无描述' }}</p>
+                                <div style="margin-top: 15px; font-size: 12px; color: #C0C4CC;">创建时间: {{ formatDate(p.createTime) }}</div>
+                            </el-card>
+                        </div>
+                    </div>
+
+                    <!-- 任务看板页 -->
+                    <div v-if="currentView === 'board'" class="kanban-container">
+                        <div v-for="col in columns" :key="col.status" class="kanban-column">
+                            <div class="column-header">
+                                <span>{{ col.label }} ({{ (boardData[col.status] || []).length }})</span>
+                                <el-button v-if="col.status === 0" type="primary" link @click="openAddTask">添加</el-button>
+                            </div>
+                            <div class="task-list">
+                                <div v-for="task in (boardData[col.status] || [])" :key="task.id" class="task-item">
+                                    <div style="font-weight: bold; margin-bottom: 8px;">{{ task.name }}</div>
+                                    <div style="font-size: 13px; color: #606266; margin-bottom: 10px;">{{ task.description }}</div>
+                                    <div style="display: flex; justify-content: flex-end; gap: 5px;">
+                                        <el-button v-if="task.status < 2" size="small" @click="moveTask(task, task.status + 1)">下个阶段</el-button>
+                                        <el-button v-if="task.status > 0" size="small" link @click="moveTask(task, task.status - 1)">回退</el-button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </el-main>
+            </el-container>
+        </el-container>
+
+        <!-- 对话框 -->
+        <el-dialog v-model="showProjectDialog" title="新建项目" width="400px">
+            <el-form :model="projectForm" label-position="top">
+                <el-form-item label="项目名称">
+                    <el-input v-model="projectForm.name" placeholder="请输入项目名称"></el-input>
+                </el-form-item>
+                <el-form-item label="描述">
+                    <el-input v-model="projectForm.description" type="textarea"></el-input>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="showProjectDialog = false">取消</el-button>
+                <el-button type="primary" @click="handleCreateProject">确定</el-button>
+            </template>
+        </el-dialog>
+
+        <el-dialog v-model="showTaskDialog" title="添加任务" width="400px">
+            <el-form :model="taskForm" label-position="top">
+                <el-form-item label="任务名称">
+                    <el-input v-model="taskForm.name" placeholder="干点什么？"></el-input>
+                </el-form-item>
+                <el-form-item label="详情">
+                    <el-input v-model="taskForm.description" type="textarea"></el-input>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="showTaskDialog = false">取消</el-button>
+                <el-button type="primary" @click="handleCreateTask">确定</el-button>
+            </template>
+        </el-dialog>
+    </div>
+
+    <script>
+        const { createApp, ref, reactive, onMounted } = Vue;
+        const { ElMessage, ElNotification } = ElementPlus;
+
+        const app = createApp({
+            setup() {
+                const isLoggedIn = ref(!!localStorage.getItem('token'));
+                const activeTab = ref('login');
+                const loading = ref(false);
+                const currentView = ref('projects');
+                const projects = ref([]);
+                const currentProject = ref({});
+                const boardData = ref({});
+                const ws = ref(null);
+
+                const userInfo = reactive({
+                    username: localStorage.getItem('username') || '',
+                    avatar: ''
+                });
+
+                const loginForm = reactive({ username: '', password: '' });
+                const registerForm = reactive({ username: '', password: '', email: '' });
+                const projectForm = reactive({ name: '', description: '' });
+                const taskForm = reactive({ name: '', description: '' });
+
+                const showProjectDialog = ref(false);
+                const showTaskDialog = ref(false);
+
+                const columns = [
+                    { status: 0, label: '待办 (Todo)' },
+                    { status: 1, label: '进行中 (Doing)' },
+                    { status: 2, label: '已完成 (Done)' }
+                ];
+
+                // Axios 拦截器注入 Token
+                axios.interceptors.request.use(config => {
+                    const token = localStorage.getItem('token');
+                    if (token) config.headers.token = token;
+                    return config;
+                });
+
+                axios.interceptors.response.use(res => {
+                    if (res.data.code !== 200) {
+                        ElMessage.error(res.data.msg);
+                        if (res.data.code === 401) logout();
+                        return Promise.reject(res.data.msg);
+                    }
+                    return res.data;
+                }, err => {
+                    if (err.response && err.response.status === 401) {
+                        ElMessage.error('会话已过期，请重新登录');
+                        logout();
+                    }
+                    return Promise.reject(err);
+                });
+
+                const handleLogin = async () => {
+                    loading.value = true;
+                    try {
+                        const res = await axios.post('/user/login', loginForm);
+                        localStorage.setItem('token', res.data.token);
+                        localStorage.setItem('username', res.data.username);
+                        userInfo.username = res.data.username;
+                        isLoggedIn.ref = true;
+                        window.location.reload(); // 简单刷新
+                    } finally { loading.value = false; }
+                };
+
+                const handleRegister = async () => {
+                    loading.value = true;
+                    try {
+                        await axios.post('/user/register', registerForm);
+                        ElMessage.success('注册成功，请登录');
+                        activeTab.value = 'login';
+                    } finally { loading.value = false; }
+                };
+
+                const logout = () => {
+                    localStorage.clear();
+                    isLoggedIn.value = false;
+                    if(ws.value) ws.value.close();
+                };
+
+                const handleCommand = (cmd) => { if(cmd === 'logout') logout(); };
+
+                const loadProjects = async () => {
+                    const res = await axios.get('/project/list');
+                    projects.value = res.data;
+                };
+
+                const handleCreateProject = async () => {
+                    await axios.post('/project/create', projectForm);
+                    showProjectDialog.value = false;
+                    ElMessage.success('项目创建成功');
+                    loadProjects();
+                };
+
+                const enterProject = async (p) => {
+                    currentProject.value = p;
+                    currentView.value = 'board';
+                    loadBoard();
+                    initWebSocket(p.id);
+                };
+
+                const loadBoard = async () => {
+                    const res = await axios.get(`/task/board/${currentProject.value.id}`);
+                    boardData.value = res.data;
+                };
+
+                const openAddTask = () => {
+                    taskForm.name = ''; taskForm.description = '';
+                    showTaskDialog.value = true;
+                };
+
+                const handleCreateTask = async () => {
+                    await axios.post('/task/create', { ...taskForm, projectId: currentProject.value.id });
+                    showTaskDialog.value = false;
+                    loadBoard();
+                };
+
+                const moveTask = async (task, newStatus) => {
+                    await axios.post('/task/update', { taskId: task.id, status: newStatus });
+                    loadBoard();
+                };
+
+                const initWebSocket = (projectId) => {
+                    if (ws.value) ws.value.close();
+                    // 模拟 userId，生产环境应从 Token 解析
+                    const userId = Math.floor(Math.random() * 1000); 
+                    ws.value = new WebSocket(`ws://${location.host}/ws/${projectId}/${userId}`);
+                    ws.value.onmessage = (e) => {
+                        if (e.data === 'refresh') {
+                            ElNotification({ title: '实时同步', message: '看板内容已更新', type: 'info' });
+                            loadBoard();
+                        }
+                    };
+                };
+
+                const formatDate = (date) => {
+                    if(!date) return '-';
+                    return new Date(date).toLocaleString();
+                };
+
+                onMounted(() => { if(isLoggedIn.value) loadProjects(); });
+
+                return {
+                    isLoggedIn, activeTab, loginForm, registerForm, loading,
+                    handleLogin, handleRegister, userInfo, projects, currentView,
+                    currentProject, enterProject, boardData, columns, showProjectDialog,
+                    projectForm, handleCreateProject, showTaskDialog, taskForm, openAddTask,
+                    handleCreateTask, moveTask, formatDate, handleCommand
+                };
+            }
+        });
+
+        app.use(ElementPlus);
+        for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+            app.component(key, component);
+        }
+        app.mount('#app');
+    </script>
+</body>
+</html>
