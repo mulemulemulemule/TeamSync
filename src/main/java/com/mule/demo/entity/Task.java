@@ -1,41 +1,32 @@
 package com.mule.demo.entity;
 
+import java.time.LocalDateTime;
+
+import lombok.Data;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.TableLogic;
-import lombok.Data;
-import java.time.LocalDateTime;
-
-/**
- * 用户实体类 (User Entity)
- */
 @Data
-@TableName("sys_user")
-public class User {
-
-
-    @TableId(type = IdType.AUTO)
+@TableName("task")//任务表
+public class Task {
+@TableId(type = IdType.AUTO)
     private Long id;
 
+    private Long ProjectId;
 
-    private String username;
+    private String name;
 
+    private String description;
 
-    private String password;
+    private Integer status;
 
-
-    private String email;
-
-    private String avatar;
-
+    private Long assigneeId;
 
     private LocalDateTime createTime;
 
-
     private LocalDateTime updateTime;
-
-
+    
     @TableLogic
     private Integer deleted;
 }

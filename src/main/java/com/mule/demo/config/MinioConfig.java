@@ -20,7 +20,7 @@ public class MinioConfig {
     private String secretKey;
     private String bucketName;
     @Bean
-    public MinioClient minioClient(){
+    public MinioClient minioClient(){ 
         try {
             // 创建 MinioClient 对象
             MinioClient minioClient = MinioClient.builder()
