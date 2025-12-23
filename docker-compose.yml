@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: teamsync-mysql
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: teamsync
+    volumes:
+      - ./docker/mysql/data:/var/lib/mysql
+    networks:
+      - teamsync-network
+
+  # Redis 缓存 (第二阶段登录用)
+  redis:
+    image: redis:latest
+    container_name: teamsync-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - teamsync-network
+
+  # RabbitMQ 消息队列 (第四阶段通知用)
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: teamsync-rabbitmq
+    ports:
+      - "5672:5672"   # API 端口
+      - "15672:15672" # 管理后台端口
+    networks:
+      - teamsync-network
+
+  # MinIO 对象存储 (第二阶段头像上传用)
+  minio:
+    image: minio/minio
+    container_name: teamsync-minio
+    ports:
+      - "9000:9000"   # API 端口
+      - "9001:9001"   # 控制台端口
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    networks:
+      - teamsync-network
+
+networks:
+  teamsync-network:
+    driver: bridge
