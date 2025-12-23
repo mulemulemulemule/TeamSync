@@ -13,7 +13,7 @@ public class Task {
 @TableId(type = IdType.AUTO)
     private Long id;
 
-    private Long ProjectId;
+    private Long projectId;
 
     private String name;
 

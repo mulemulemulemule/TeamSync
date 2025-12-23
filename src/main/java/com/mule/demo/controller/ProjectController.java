@@ -1,6 +1,8 @@
 package com.mule.demo.controller;
 
 import com.mule.demo.common.Result;
+import com.mule.demo.common.UserContext;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import com.mule.demo.service.ProjectService;
@@ -20,7 +22,8 @@ private ProjectService projectService;
 @Operation(summary ="创建项目")
 @PostMapping("/create")
 public Result<String> create(@RequestBody @Valid ProjectCreateDTO dto){
+    dto.setOwnerId(UserContext.getUserId());
     projectService.createProject(dto);
-return Result.success("创建成功");
+return Result.success("create project success");
 }
 }

@@ -35,8 +35,8 @@ taskService.createTask(dto);
     }
     @Operation(summary ="更新任务")
     @PostMapping("/update")
-    public Result<String> getTaskDetail(@RequestBody @Valid TaskUpdateDTO dto) {
+    public Result<String> updateTask(@RequestBody @Valid TaskUpdateDTO dto) {
         taskService.updateTask(dto);
-        return Result.success("success");
+        return Result.success("update success");
     }
 }

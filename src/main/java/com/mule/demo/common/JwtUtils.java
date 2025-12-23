@@ -1,5 +1,7 @@
 package com.mule.demo.common;
 import cn.hutool.jwt.JWT;
+import cn.hutool.jwt.JWTUtil;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,11 +14,18 @@ public class JwtUtils {
       Map<String, Object> paylod = new HashMap<>();
       paylod.put("userId", userId);
       paylod.put("username", username);
-      paylod.put("JWT.EXPIRES_AT", System.currentTimeMillis()+1000*60*60*24); // 24小时后过期
+      paylod.put("exp", System.currentTimeMillis()+1000*60*60*24);
       return JWT.create()
               .addPayloads(paylod)
               .setKey(KEY)
               .sign();
     }
+   public static boolean validate(String token) {
+return JWTUtil.verify(token, KEY)&& JWT.of(token).setKey(KEY).validate(0);
+   }
+
+   public static Long getUserId(String token) {
+ return Long.valueOf(JWTUtil.parseToken(token).getPayload("userId").toString());
+ }
 
 }

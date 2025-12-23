@@ -1,6 +1,7 @@
 package com.mule.demo.controller;
 
 import com.mule.demo.common.Result;
+import com.mule.demo.common.UserContext;
 import com.mule.demo.entity.User;
 import com.mule.demo.service.UserService;
 
@@ -50,10 +51,11 @@ public class UserController {
 
     @Operation(summary = "头像上传")
     @PostMapping("/upload/avatar")
-    public Result<String> uploadAvatar(@RequestParam("file") MultipartFile file,@RequestParam("userId") Long userId) {
+    public Result<String> uploadAvatar(@RequestParam("file") MultipartFile file) {       
 if(file.isEmpty()){
     return Result.error("file is empty");
 }
+Long userId = UserContext.getUserId();
 String url = userService.uploadAvatar(userId,file);
 return Result.success(url);
     }

@@ -10,6 +10,7 @@ import com.mule.demo.mapper.TaskMapper;
 import java.util.List;
 import com.mule.demo.model.dto.TaskCreateDTO;
 import com.mule.demo.service.TaskService;
+import com.mule.demo.websocket.WebSocketServer;
 import com.mule.demo.entity.Project;
 import com.mule.demo.model.dto.TaskUpdateDTO;
 import java.util.Map;
@@ -47,7 +48,7 @@ LambdaQueryWrapper<Task> queryWrapper = new LambdaQueryWrapper<>();
         task.setStatus(0);
 
         this.save(task);
-        
+        WebSocketServer.sendInfo(dto.getProjectId(), "new task,refresh");
     }
     @Override
     public Map<Integer,List<Task>> getTaskBoard(Long projectId) {
@@ -75,6 +76,7 @@ LambdaQueryWrapper<Task> queryWrapper = new LambdaQueryWrapper<>();
             updateTask.setAssigneeId(dto.getAssigneeId());
         }
         this.updateById(updateTask);
+        WebSocketServer.sendInfo(task.getProjectId(), "update task,refresh");
     }
     }
 
