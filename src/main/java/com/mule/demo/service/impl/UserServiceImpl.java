@@ -17,9 +17,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.mule.demo.common.MinioUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-/**
- * 用户业务层实现类 (User Service Implementation)
- */
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
     @Autowired
@@ -27,7 +24,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public User register(UserRegisterDTO userRegisterDTO) {
-        // 注册逻辑
+
     LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getUsername, userRegisterDTO.getUsername());
         User existingUser = this.getOne(queryWrapper);
@@ -46,7 +43,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
     @Override
     public String login(UserLoginDTO userLoginDTO) {
-        // 登录逻辑
+
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getUsername, userLoginDTO.getUsername());
         User user = this.getOne(queryWrapper);
@@ -57,7 +54,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
     @Override
     public String uploadAvatar(Long UserId,MultipartFile file) {
-        // 上传头像逻辑
+
         String url =minioUtils.upload(file);
         User user =new User();
         user.setId(UserId);

@@ -8,7 +8,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 @Data
-@TableName("task")//任务表
+@TableName("task")
 public class Task {
 @TableId(type = IdType.AUTO)
     private Long id;

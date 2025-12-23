@@ -7,9 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableLogic;
 import lombok.Data;
 import java.time.LocalDateTime;
 
-/**
- * 用户实体类 (User Entity)
- */
+
 @Data
 @TableName("sys_user")
 public class User {
