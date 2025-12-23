@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,6 +20,7 @@ import com.mule.demo.model.dto.UserLoginDTO;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 用户控制器 (User Controller)
@@ -63,5 +65,18 @@ public class UserController {
         data.put("token", token);
         data.put("username", userLoginDTO.getUsername());
         return Result.success(data);
+    }
+
+    /**
+     * 头像上传接口
+     */
+    @Operation(summary = "头像上传") // Swagger 注解，用于生成接口文档
+    @PostMapping("/upload/avatar")
+    public Result<String> uploadAvatar(@RequestParam("file") MultipartFile file,@RequestParam("userId") Long userId) {
+if(file.isEmpty()){
+    return Result.error("file is empty");
 }
+String url = userService.uploadAvatar(userId,file);
+return Result.success(url);
+    }
 }

@@ -47,6 +47,13 @@ public class User {
      * </p>
      */
     private String email;
+    /**
+     * 头像地址
+     * <p>
+     * 存储用户头像的 URL 地址
+     * </p>
+     */
+    private String avatar;
 
     /**
      * 创建时间
