@@ -7,7 +7,7 @@ import com.mule.demo.mapper.UserMapper;
 import com.mule.demo.service.UserService;
 
 import cn.hutool.crypto.digest.BCrypt;
-
+import java.util.concurrent.TimeUnit;
 import org.springframework.stereotype.Service;
 import com.mule.demo.model.dto.UserRegisterDTO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -16,11 +16,14 @@ import com.mule.demo.common.JwtUtils;
 import org.springframework.web.multipart.MultipartFile;
 import com.mule.demo.common.MinioUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
     @Autowired
     private MinioUtils minioUtils;
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Override
     public User register(UserRegisterDTO userRegisterDTO) {
@@ -50,7 +53,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (user == null || !BCrypt.checkpw(userLoginDTO.getPassword(), user.getPassword())) {
             throw new ServiceException("Invalid username or password");
         }
-        return JwtUtils.createToken(user.getId(), user.getUsername());
+        String token = JwtUtils.createToken(user.getId(), user.getUsername());
+        String redisKey = "login:token:" + token;
+        redisTemplate.opsForValue().set(redisKey, user.getId(), 24, TimeUnit.HOURS);
+        return token;
     }
     @Override
     public String uploadAvatar(Long UserId,MultipartFile file) {
@@ -64,5 +70,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new ServiceException("Failed to update user avatar");
 }
         return url;
+    }
+    @Override
+    public void logout(String token) {
+         String redisKey = "login:token:" + token;
+        redisTemplate.delete(redisKey);
     }
 }

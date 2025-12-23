@@ -10,4 +10,5 @@ public interface UserService extends IService<User> {
 User register(UserRegisterDTO userRegisterDTO);
 String login(UserLoginDTO userLoginDTO);
 String uploadAvatar(Long userId,MultipartFile file);
+void logout(String token);
 }

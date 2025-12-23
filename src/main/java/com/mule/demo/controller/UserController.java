@@ -59,4 +59,13 @@ Long userId = UserContext.getUserId();
 String url = userService.uploadAvatar(userId,file);
 return Result.success(url);
     }
+    @Operation(summary = "用户登出")
+    @PostMapping("/logout")
+    public Result<String> logout(jakarta.servlet.http.HttpServletRequest request) {
+        String token = request.getHeader("token");
+        if (token != null) {
+            userService.logout(token);
+    }
+    return Result.success("logout success");
+}
 }

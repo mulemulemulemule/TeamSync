@@ -15,7 +15,7 @@ services:
     networks:
       - teamsync-network
 
-  # Redis 缓存 (第二阶段登录用)
+  # Redis 缓存
   redis:
     image: redis:latest
     container_name: teamsync-redis
@@ -24,7 +24,7 @@ services:
     networks:
       - teamsync-network
 
-  # RabbitMQ 消息队列 (第四阶段通知用)
+  # RabbitMQ 消息队列
   rabbitmq:
     image: rabbitmq:3-management
     container_name: teamsync-rabbitmq
@@ -34,7 +34,7 @@ services:
     networks:
       - teamsync-network
 
-  # MinIO 对象存储 (第二阶段头像上传用)
+  # MinIO 对象存储
   minio:
     image: minio/minio
     container_name: teamsync-minio
