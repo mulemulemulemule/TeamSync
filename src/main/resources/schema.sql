@@ -37,3 +37,16 @@ CREATE TABLE IF NOT EXISTS `project` (
     `deleted` tinyint(1) DEFAULT 0 COMMENT '逻辑删除',
     PRIMARY KEY (`id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='任务表';
+
+ -- 项目成员关联表
+     CREATE TABLE IF NOT EXISTS `project_member` (
+         `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+         `project_id` bigint(20) NOT NULL COMMENT '项目ID',
+         `user_id` bigint(20) NOT NULL COMMENT '用户ID',
+         `role` varchar(20) DEFAULT 'MEMBER' COMMENT '角色: OWNER-负责人, MEMBER-成员',
+         `status` tinyint(1) DEFAULT 0 COMMENT '0:待确认, 1:已加入',
+         `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '加入时间',
+         
+         PRIMARY KEY (`id`),
+         UNIQUE KEY `uk_project_user` (`project_id`, `user_id`) -- 保证一个人在一个项目里只能加入一次
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='项目成员表';

@@ -21,8 +21,7 @@ public class WebSocketServer {
     // 静态变量，用来记录所有在线连接。
     // Key: projectId (项目ID)
     // Value: 这个项目下的所有 WebSocket 连接 (Session)
-    private static final ConcurrentHashMap<Long, CopyOnWriteArraySet<Session>> PROJECT_SESSIONS = new
-      ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Long, CopyOnWriteArraySet<Session>> PROJECT_SESSIONS = new ConcurrentHashMap<>();
       /*
       连接成功调用
       */

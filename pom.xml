@@ -98,6 +98,11 @@
          <groupId>org.apache.commons</groupId>
         <artifactId>commons-pool2</artifactId>
     </dependency>
+	    <!-- 消息队列 RabbitMQ -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-amqp</artifactId>
+    </dependency>
 
 		<!-- 测试依赖 -->
 		<dependency>

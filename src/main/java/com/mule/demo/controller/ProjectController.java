@@ -1,10 +1,10 @@
 package com.mule.demo.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.mule.demo.common.Result;
 import com.mule.demo.common.UserContext;
 import com.mule.demo.entity.Project;
 import com.mule.demo.model.dto.ProjectCreateDTO;
+import com.mule.demo.model.dto.ProjectInviteDTO;
 import com.mule.demo.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,15 +27,23 @@ public class ProjectController {
     public Result<String> create(@RequestBody @Valid ProjectCreateDTO dto){
         dto.setOwnerId(UserContext.getUserId());
         projectService.createProject(dto);
-        return Result.success("创建成功");
+        return Result.success("create project success");
     }
 
     @Operation(summary = "获取我的项目列表")
     @GetMapping("/list")
     public Result<List<Project>> listMyProjects() {
         Long userId = UserContext.getUserId();
-        LambdaQueryWrapper<Project> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Project::getOwnerId, userId).orderByDesc(Project::getCreateTime);
-        return Result.success(projectService.list(wrapper));
+List<Project> projects = projectService.listMyProjects(userId);
+        return Result.success(projects);
+    }
+    @Operation(summary = "邀请成员")
+    @PostMapping("/invite")
+    public Result<String> inviteMember(@RequestBody @Valid ProjectInviteDTO inviteDTO) {
+        Long currentUserId= UserContext.getUserId();
+        projectService.inviteMember( currentUserId,inviteDTO);
+        return Result.success("invite success");
+
+        
     }
 }
