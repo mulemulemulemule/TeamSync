@@ -36,7 +36,7 @@ public class ProjectController {
         return Result.success("create project success");
     }
     @Operation(summary ="获取项目成员列表")
-    @GetMapping("/member/{projectId}")
+    @GetMapping("/members/{projectId}")
     public Result<List<ProjectMemberVO>> listMembers(@PathVariable Long projectId) {
         return Result.success(projectMemberMapper.listProjectMembers(projectId));
     }

@@ -3,338 +3,258 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TeamSync | 敏捷协同平台</title>
-    <!-- CDN 资源 -->
+    <title>TeamSync Pro | 极速协同</title>
     <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/element-plus"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://unpkg.com/@element-plus/icons-vue"></script>
     <style>
-        body { margin: 0; font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', sans-serif; background-color: #f5f7fa; }
-        #app { height: 100vh; }
-        .login-container { height: 100%; display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .login-card { width: 400px; padding: 20px; border-radius: 12px; }
-        .main-layout { height: 100%; }
-        .aside { background-color: #304156; color: white; width: 240px; }
-        .header { background-color: white; border-bottom: 1px solid #dcdfe6; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
-        .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 20px; }
-        .project-card { cursor: pointer; transition: all 0.3s; }
-        .project-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
-        .kanban-container { display: flex; gap: 20px; padding: 20px; height: calc(100vh - 120px); overflow-x: auto; }
-        .kanban-column { background-color: #ebedf0; border-radius: 8px; width: 350px; flex-shrink: 0; display: flex; flex-direction: column; }
-        .column-header { padding: 15px; font-weight: bold; font-size: 16px; border-bottom: 1px solid #dcdfe6; display: flex; justify-content: space-between; }
+        :root { --sidebar-bg: #001529; --main-bg: #f0f2f5; }
+        body { margin: 0; font-family: 'PingFang SC', Arial, sans-serif; background-color: var(--main-bg); }
+        #app { height: 100vh; overflow: hidden; }
+        .login-bg { height: 100vh; display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); }
+        .login-card { width: 400px; border-radius: 12px; }
+        .app-layout { height: 100vh; display: flex; }
+        .sidebar { width: 200px; background: var(--sidebar-bg); color: white; display: flex; flex-direction: column; }
+        .logo { height: 64px; line-height: 64px; text-align: center; font-size: 20px; font-weight: bold; color: #409EFF; border-bottom: 1px solid #002140; }
+        .main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .header { height: 60px; background: white; border-bottom: 1px solid #dcdfe6; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .content-area { flex: 1; overflow-y: auto; padding: 20px; }
+        .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .p-card { cursor: pointer; transition: 0.3s; position: relative; }
+        .p-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+        
+        /* 看板与成员列表布局 */
+        .board-wrapper { display: flex; height: 100%; gap: 20px; }
+        .kanban-container { flex: 1; display: flex; gap: 20px; overflow-x: auto; padding-bottom: 10px; }
+        .kb-column { background: #ebedf0; border-radius: 10px; width: 300px; flex-shrink: 0; display: flex; flex-direction: column; }
+        .kb-title { padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .task-list { padding: 10px; flex: 1; overflow-y: auto; }
-        .task-item { background: white; padding: 15px; border-radius: 6px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .task-item:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .user-info { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .task-item { background: white; border-radius: 8px; padding: 15px; margin-bottom: 12px; border: 1px solid #e6e6e6; }
+        
+        .member-sidebar { width: 240px; background: white; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 2px 12px 0 rgba(0,0,0,0.05); }
+        .member-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px dotted #eee; }
+        .user-link { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 5px 10px; border-radius: 20px; }
     </style>
 </head>
 <body>
     <div id="app">
-        <!-- 登录注册模块 -->
-        <div v-if="!isLoggedIn" class="login-container">
+        <!-- 登录注册 -->
+        <div v-if="!isLoggedIn" class="login-bg">
             <el-card class="login-card">
-                <template #header>
-                    <div style="text-align: center; font-size: 24px; font-weight: bold; color: #409EFF;">TeamSync</div>
-                </template>
-                <el-tabs v-model="activeTab">
+                <h2 style="text-align: center; color: #409EFF; margin-bottom: 20px;">TeamSync Pro</h2>
+                <el-tabs v-model="authTab" stretch>
                     <el-tab-pane label="登录" name="login">
                         <el-form :model="loginForm" label-position="top">
-                            <el-form-item label="用户名">
-                                <el-input v-model="loginForm.username" placeholder="请输入用户名"></el-input>
-                            </el-form-item>
-                            <el-form-item label="密码">
-                                <el-input v-model="loginForm.password" type="password" placeholder="请输入密码"></el-input>
-                            </el-form-item>
-                            <el-button type="primary" style="width: 100%;" @click="handleLogin" :loading="loading">立即登录</el-button>
+                            <el-form-item label="用户名"><el-input v-model="loginForm.username"></el-input></el-form-item>
+                            <el-form-item label="密码"><el-input v-model="loginForm.password" type="password" show-password></el-input></el-form-item>
+                            <el-button type="primary" style="width: 100%" @click="handleLogin">登录</el-button>
                         </el-form>
                     </el-tab-pane>
-                    <el-tab-pane label="注册" name="register">
-                        <el-form :model="registerForm" label-position="top">
-                            <el-form-item label="用户名">
-                                <el-input v-model="registerForm.username" placeholder="4-20位字符"></el-input>
-                            </el-form-item>
-                            <el-form-item label="邮箱">
-                                <el-input v-model="registerForm.email" placeholder="example@qq.com"></el-input>
-                            </el-form-item>
-                            <el-form-item label="密码">
-                                <el-input v-model="registerForm.password" type="password" placeholder="6-20位字符"></el-input>
-                            </el-form-item>
-                            <el-button type="success" style="width: 100%;" @click="handleRegister" :loading="loading">注册并登录</el-button>
+                    <el-tab-pane label="注册" name="reg">
+                        <el-form :model="regForm" label-position="top">
+                            <el-form-item label="用户名"><el-input v-model="regForm.username"></el-input></el-form-item>
+                            <el-form-item label="邮箱"><el-input v-model="regForm.email"></el-input></el-form-item>
+                            <el-form-item label="密码"><el-input v-model="regForm.password" type="password" show-password></el-input></el-form-item>
+                            <el-button type="success" style="width: 100%" @click="handleRegister">注册</el-button>
                         </el-form>
                     </el-tab-pane>
                 </el-tabs>
             </el-card>
         </div>
 
-        <!-- 主界面模块 -->
-        <el-container v-else class="main-layout">
-            <el-aside class="aside">
-                <div style="padding: 20px; font-size: 20px; font-weight: bold; border-bottom: 1px solid #1f2d3d;">TeamSync</div>
-                <el-menu background-color="#304156" text-color="#fff" active-text-color="#409EFF" default-active="1">
-                    <el-menu-item index="1" @click="currentView = 'projects'">
-                        <el-icon><grid /></el-icon>
-                        <span>项目大厅</span>
-                    </el-menu-item>
+        <div v-else class="app-layout">
+            <div class="sidebar">
+                <div class="logo">TEAMSYNC</div>
+                <el-menu background-color="#001529" text-color="#fff" :default-active="activeMenu">
+                    <el-menu-item index="hall" @click="changeView('hall')"><el-icon><Compass /></el-icon><span>项目大厅</span></el-menu-item>
+                    <el-menu-item index="my" @click="changeView('my')"><el-icon><Menu /></el-icon><span>我的项目</span></el-menu-item>
                 </el-menu>
-            </el-aside>
-            
-            <el-container>
-                <el-header class="header">
-                    <div>
-                        <el-breadcrumb separator="/">
-                            <el-breadcrumb-item @click="currentView = 'projects'">项目中心</el-breadcrumb-item>
-                            <el-breadcrumb-item v-if="currentView === 'board'">{{ currentProject.name }}</el-breadcrumb-item>
-                        </el-breadcrumb>
-                    </div>
-                    <div class="user-info">
-                        <el-dropdown @command="handleCommand">
-                            <span class="el-dropdown-link">
-                                <el-avatar :size="32" :src="userInfo.avatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'"></el-avatar>
-                                <span style="margin-left: 8px;">{{ userInfo.username }}</span>
-                            </span>
-                            <template #header></template>
-                            <template #dropdown>
-                                <el-dropdown-menu>
-                                    <el-dropdown-item command="logout">退出登录</el-dropdown-item>
-                                </el-dropdown-menu>
-                            </template>
+            </div>
+
+            <div class="main-container">
+                <header class="header">
+                    <div style="font-weight: bold; font-size: 16px;">{{ currentTitle }}</div>
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <el-popover placement="bottom" :width="300" trigger="click">
+                            <template #reference><el-badge :value="invites.length" :hidden="invites.length === 0"><el-icon style="font-size: 20px; cursor: pointer;"><Bell /></el-icon></el-badge></template>
+                            <div v-if="invites.length === 0" style="text-align: center; padding: 20px; color: #999;">暂无邀请</div>
+                            <div v-for="inv in invites" :key="inv.id" style="padding: 12px; border-bottom: 1px solid #f0f0f0;">
+                                <div style="font-size: 14px; margin-bottom: 8px;">来自项目：<b>{{ inv.name }}</b></div>
+                                <el-button size="small" type="primary" @click="handleInvite(inv.id, true)">接受</el-button>
+                                <el-button size="small" type="danger" plain @click="handleInvite(inv.id, false)">拒绝</el-button>
+                            </div>
+                        </el-popover>
+                        <el-dropdown @command="handleUserMenu">
+                            <div class="user-link">
+                                <el-avatar :size="30" :src="userInfo.avatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'"></el-avatar>
+                                <span>{{ userInfo.username }}</span>
+                            </div>
+                            <template #dropdown><el-dropdown-menu><el-dropdown-item command="avatar">修改头像</el-dropdown-item><el-dropdown-item command="logout" divided>退出登录</el-dropdown-item></el-dropdown-menu></template>
                         </el-dropdown>
                     </div>
-                </el-header>
+                </header>
 
-                <el-main style="padding: 0;">
-                    <!-- 项目列表页 -->
-                    <div v-if="currentView === 'projects'">
-                        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-                            <h2 style="margin: 0;">我的项目</h2>
-                            <el-button type="primary" @click="showProjectDialog = true">创建新项目</el-button>
+                <div class="content-area">
+                    <div v-if="view === 'my' || view === 'hall'">
+                        <div style="margin-bottom: 20px; display: flex; justify-content: space-between;">
+                            <span>{{ view === 'hall' ? '全服公开项目' : '我的项目' }}</span>
+                            <el-button v-if="view === 'my'" type="primary" icon="Plus" @click="showAddProject = true">创建项目</el-button>
                         </div>
                         <div class="project-grid">
-                            <el-card v-for="p in projects" :key="p.id" class="project-card" @click="enterProject(p)">
+                            <el-card v-for="p in projects" :key="p.id" class="p-card" @click="enterProject(p)">
+                                <el-tag size="small" style="margin-bottom: 10px;" :type="p.type === 1 ? 'success' : 'info'">{{ p.type === 1 ? '公开' : '私有' }}</el-tag>
                                 <h3>{{ p.name }}</h3>
-                                <p style="color: #909399; font-size: 14px;">{{ p.description || '暂无描述' }}</p>
-                                <div style="margin-top: 15px; font-size: 12px; color: #C0C4CC;">创建时间: {{ formatDate(p.createTime) }}</div>
+                                <p style="font-size: 13px; color: #666; height: 36px; overflow: hidden;">{{ p.description }}</p>
+                                <div style="font-size: 12px; color: #999;">负责人 ID: {{ p.ownerId }}</div>
                             </el-card>
                         </div>
                     </div>
 
-                    <!-- 任务看板页 -->
-                    <div v-if="currentView === 'board'" class="kanban-container">
-                        <div v-for="col in columns" :key="col.status" class="kanban-column">
-                            <div class="column-header">
-                                <span>{{ col.label }} ({{ (boardData[col.status] || []).length }})</span>
-                                <el-button v-if="col.status === 0" type="primary" link @click="openAddTask">添加</el-button>
+                    <!-- 看板视图 + 成员列表 -->
+                    <div v-if="view === 'board'" style="height: 100%; display: flex; flex-direction: column;">
+                        <div style="margin-bottom: 20px; display: flex; justify-content: space-between;">
+                            <el-button icon="Back" @click="changeView('my')">返回列表</el-button>
+                            <div v-if="isOwner"><el-button type="success" icon="UserPlus" @click="showInvite = true">邀请成员</el-button></div>
+                        </div>
+                        <div class="board-wrapper">
+                            <!-- 看板 -->
+                            <div class="kanban-container">
+                                <div v-for="col in columns" :key="col.status" class="kb-column">
+                                    <div class="kb-title">{{ col.label }} <el-button v-if="col.status === 0 && isOwner" icon="Plus" circle size="small" @click="showAddTask = true"></el-button></div>
+                                    <div class="task-list">
+                                        <div v-for="task in (boardData[col.status] || [])" :key="task.id" class="task-item">
+                                            <div style="font-weight: bold; margin-bottom: 8px;">{{ task.name }}</div>
+                                            <div style="font-size: 12px; color: #666; margin-bottom: 12px;">{{ task.description }}</div>
+                                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                <el-tag size="small" type="info">{{ task.assigneeId ? '执行ID: '+task.assigneeId : '未指派' }}</el-tag>
+                                                <div v-if="isOwner || task.assigneeId == userInfo.id">
+                                                    <el-button-group>
+                                                        <el-button v-if="task.status > 0" icon="ArrowLeft" size="small" circle @click="moveTask(task, task.status - 1)"></el-button>
+                                                        <el-button v-if="isOwner" icon="User" size="small" @click="assignTask(task)"></el-button>
+                                                        <el-button v-if="task.status < 2" icon="ArrowRight" size="small" circle @click="moveTask(task, task.status + 1)"></el-button>
+                                                    </el-button-group>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="task-list">
-                                <div v-for="task in (boardData[col.status] || [])" :key="task.id" class="task-item">
-                                    <div style="font-weight: bold; margin-bottom: 8px;">{{ task.name }}</div>
-                                    <div style="font-size: 13px; color: #606266; margin-bottom: 10px;">{{ task.description }}</div>
-                                    <div style="display: flex; justify-content: flex-end; gap: 5px;">
-                                        <el-button v-if="task.status < 2" size="small" @click="moveTask(task, task.status + 1)">下个阶段</el-button>
-                                        <el-button v-if="task.status > 0" size="small" link @click="moveTask(task, task.status - 1)">回退</el-button>
+                            <!-- 💡 成员列表侧边栏 -->
+                            <div class="member-sidebar">
+                                <div style="font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 5px;">
+                                    <el-icon color="#409EFF"><UserFilled /></el-icon> 项目成员
+                                </div>
+                                <div class="task-list">
+                                    <div v-for="m in members" :key="m.userId" class="member-item">
+                                        <el-avatar :size="30" :src="m.avatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'"></el-avatar>
+                                        <div style="flex: 1; overflow: hidden;">
+                                            <div style="font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ m.username }}</div>
+                                            <div style="font-size: 11px; color: #999;">ID: {{ m.userId }} | {{ m.role }}</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </el-main>
-            </el-container>
-        </el-container>
+                </div>
+            </div>
+        </div>
 
-        <!-- 对话框 -->
-        <el-dialog v-model="showProjectDialog" title="新建项目" width="400px">
+        <!-- 弹窗 -->
+        <el-dialog v-model="showAddProject" title="新建项目" width="400px">
             <el-form :model="projectForm" label-position="top">
-                <el-form-item label="项目名称">
-                    <el-input v-model="projectForm.name" placeholder="请输入项目名称"></el-input>
-                </el-form-item>
-                <el-form-item label="描述">
-                    <el-input v-model="projectForm.description" type="textarea"></el-input>
-                </el-form-item>
+                <el-form-item label="项目名称"><el-input v-model="projectForm.name"></el-input></el-form-item>
+                <el-form-item label="描述"><el-input v-model="projectForm.description" type="textarea"></el-input></el-form-item>
+                <el-form-item label="类型"><el-radio-group v-model="projectForm.type"><el-radio :label="0">私有</el-radio><el-radio :label="1">公开</el-radio></el-radio-group></el-form-item>
             </el-form>
-            <template #footer>
-                <el-button @click="showProjectDialog = false">取消</el-button>
-                <el-button type="primary" @click="handleCreateProject">确定</el-button>
-            </template>
+            <template #footer><el-button @click="showAddProject=false">取消</el-button><el-button type="primary" @click="doAddProject">确定</el-button></template>
         </el-dialog>
-
-        <el-dialog v-model="showTaskDialog" title="添加任务" width="400px">
+        <el-dialog v-model="showAddTask" title="创建任务" width="400px">
             <el-form :model="taskForm" label-position="top">
-                <el-form-item label="任务名称">
-                    <el-input v-model="taskForm.name" placeholder="干点什么？"></el-input>
-                </el-form-item>
-                <el-form-item label="详情">
-                    <el-input v-model="taskForm.description" type="textarea"></el-input>
-                </el-form-item>
+                <el-form-item label="任务标题"><el-input v-model="taskForm.name"></el-input></el-form-item>
+                <el-form-item label="描述"><el-input v-model="taskForm.description" type="textarea"></el-input></el-form-item>
+                <el-form-item label="执行者 ID"><el-input v-model="taskForm.assigneeId"></el-input></el-form-item>
             </el-form>
-            <template #footer>
-                <el-button @click="showTaskDialog = false">取消</el-button>
-                <el-button type="primary" @click="handleCreateTask">确定</el-button>
-            </template>
+            <template #footer><el-button @click="showAddTask=false">取消</el-button><el-button type="primary" @click="doAddTask">确定</el-button></template>
         </el-dialog>
+        <el-dialog v-model="showInvite" title="邀请成员" width="350px">
+            <el-input v-model="inviteUsername" placeholder="对方用户名"></el-input>
+            <template #footer><el-button type="primary" style="width: 100%" @click="doInvite">发送邀请</el-button></template>
+        </el-dialog>
+        <input type="file" ref="fileInput" style="display: none" @change="onFileChange" accept="image/*">
     </div>
 
     <script>
-        const { createApp, ref, reactive, onMounted } = Vue;
-        const { ElMessage, ElNotification } = ElementPlus;
+        const { createApp, ref, reactive, onMounted, computed } = Vue;
+        const { ElMessage, ElNotification, ElMessageBox } = ElementPlus;
 
-        const app = createApp({
+        createApp({
             setup() {
                 const isLoggedIn = ref(!!localStorage.getItem('token'));
-                const activeTab = ref('login');
                 const loading = ref(false);
-                const currentView = ref('projects');
+                const authTab = ref('login');
+                const view = ref('hall');
+                const activeMenu = ref('hall');
+                const userInfo = reactive({ id: localStorage.getItem('userId'), username: localStorage.getItem('username'), avatar: localStorage.getItem('avatar') });
+                
                 const projects = ref([]);
-                const currentProject = ref({});
+                const invites = ref([]);
+                const members = ref([]);
                 const boardData = ref({});
+                const currentProject = ref({});
                 const ws = ref(null);
 
-                const userInfo = reactive({
-                    username: localStorage.getItem('username') || '',
-                    avatar: ''
-                });
-
                 const loginForm = reactive({ username: '', password: '' });
-                const registerForm = reactive({ username: '', password: '', email: '' });
-                const projectForm = reactive({ name: '', description: '' });
-                const taskForm = reactive({ name: '', description: '' });
+                const regForm = reactive({ username: '', email: '', password: '' });
+                const projectForm = reactive({ name: '', description: '', type: 0 });
+                const taskForm = reactive({ name: '', description: '', assigneeId: null });
+                const inviteUsername = ref('');
 
-                const showProjectDialog = ref(false);
-                const showTaskDialog = ref(false);
+                const showAddProject = ref(false);
+                const showAddTask = ref(false);
+                const showInvite = ref(false);
+                const fileInput = ref(null);
 
-                const columns = [
-                    { status: 0, label: '待办 (Todo)' },
-                    { status: 1, label: '进行中 (Doing)' },
-                    { status: 2, label: '已完成 (Done)' }
-                ];
+                const columns = [{status:0, label:'待办'}, {status:1, label:'进行中'}, {status:2, label:'已完成'}];
+                const currentTitle = computed(() => (view.value === 'my' ? '我的项目' : view.value === 'hall' ? '项目大厅' : '项目看板'));
+                const isOwner = computed(() => currentProject.value.ownerId == userInfo.id);
 
-                // Axios 拦截器注入 Token
-                axios.interceptors.request.use(config => {
-                    const token = localStorage.getItem('token');
-                    if (token) config.headers.token = token;
-                    return config;
-                });
+                axios.defaults.baseURL = '';
+                axios.interceptors.request.use(cfg => { if(localStorage.getItem('token')) cfg.headers.token = localStorage.getItem('token'); return cfg; });
+                axios.interceptors.response.use(res => { if(res.data.code !== 200) { ElMessage.error(res.data.msg); return Promise.reject(); } return res.data; }, err => { if(err.response?.status === 401) { localStorage.clear(); isLoggedIn.value = false; } return Promise.reject(err); });
 
-                axios.interceptors.response.use(res => {
-                    if (res.data.code !== 200) {
-                        ElMessage.error(res.data.msg);
-                        if (res.data.code === 401) logout();
-                        return Promise.reject(res.data.msg);
-                    }
-                    return res.data;
-                }, err => {
-                    if (err.response && err.response.status === 401) {
-                        ElMessage.error('会话已过期，请重新登录');
-                        logout();
-                    }
-                    return Promise.reject(err);
-                });
+                const handleLogin = async () => { const res = await axios.post('/user/login', loginForm); localStorage.setItem('token', res.data.token); localStorage.setItem('userId', res.data.id); localStorage.setItem('username', res.data.username); localStorage.setItem('avatar', res.data.avatar || ''); window.location.reload(); };
+                const handleRegister = async () => { await axios.post('/user/register', regForm); ElMessage.success('注册成功'); authTab.value = 'login'; };
+                const changeView = (v) => { view.value = v; activeMenu.value = v; if(v === 'my') loadMyProjects(); if(v === 'hall') loadHall(); };
+                const loadMyProjects = async () => { const res = await axios.get('/project/list'); projects.value = res.data; };
+                const loadHall = async () => { const res = await axios.get('/project/hall'); projects.value = res.data; };
+                const enterProject = (p) => { currentProject.value = p; view.value = 'board'; loadBoard(p.id); loadMembers(p.id); initWS(p.id); };
+                const loadBoard = async (pid) => { const res = await axios.get(`/task/board/${pid}`); boardData.value = res.data; };
+                const loadMembers = async (pid) => { const res = await axios.get(`/project/members/${pid}`); members.value = res.data; };
+                const doAddProject = async () => { await axios.post('/project/create', projectForm); showAddProject.value = false; changeView('my'); };
+                const doAddTask = async () => { await axios.post('/task/create', { ...taskForm, projectId: currentProject.value.id }); showAddTask.value = false; loadBoard(currentProject.value.id); };
+                const moveTask = async (t, s, a = null) => { await axios.post('/task/update', { taskId: t.id, status: s, assigneeId: a }); loadBoard(currentProject.value.id); };
+                const assignTask = (t) => { ElMessageBox.prompt('输入执行者 ID', '指派').then(({ value }) => { if(value) moveTask(t, t.status, value); }); };
+                const doInvite = async () => { await axios.post('/project/invite', { projectId: currentProject.value.id, username: inviteUsername.value }); showInvite.value = false; ElMessage.success('邀请已发出'); };
+                const handleInvite = async (pid, accept) => { await axios.post('/project/invite/handle', { projectId: pid, accept }); loadInvites(); if(accept) loadMyProjects(); };
+                const loadInvites = async () => { const res = await axios.get('/project/invite/list'); invites.value = res.data; };
+                const handleUserMenu = (cmd) => { if(cmd === 'logout') { localStorage.clear(); location.reload(); } if(cmd === 'avatar') fileInput.value.click(); };
+                const onFileChange = async (e) => { const file = e.target.files[0]; if(!file) return; const fd = new FormData(); fd.append('file', file); const res = await axios.post('/user/upload/avatar', fd); userInfo.avatar = res.data; localStorage.setItem('avatar', res.data); };
+                const initWS = (pid) => { if(ws.value) ws.value.close(); ws.value = new WebSocket(`ws://${location.host}/ws/${pid}/${parseInt(userInfo.id)}`); ws.value.onmessage = (e) => { if(e.data.includes('refresh')) { ElNotification({ title: '同步', message: '看板更新', type: 'info', position: 'bottom-right' }); loadBoard(pid); } }; };
 
-                const handleLogin = async () => {
-                    loading.value = true;
-                    try {
-                        const res = await axios.post('/user/login', loginForm);
-                        localStorage.setItem('token', res.data.token);
-                        localStorage.setItem('username', res.data.username);
-                        userInfo.username = res.data.username;
-                        isLoggedIn.ref = true;
-                        window.location.reload(); // 简单刷新
-                    } finally { loading.value = false; }
-                };
-
-                const handleRegister = async () => {
-                    loading.value = true;
-                    try {
-                        await axios.post('/user/register', registerForm);
-                        ElMessage.success('注册成功，请登录');
-                        activeTab.value = 'login';
-                    } finally { loading.value = false; }
-                };
-
-                const logout = () => {
-                    localStorage.clear();
-                    isLoggedIn.value = false;
-                    if(ws.value) ws.value.close();
-                };
-
-                const handleCommand = (cmd) => { if(cmd === 'logout') logout(); };
-
-                const loadProjects = async () => {
-                    const res = await axios.get('/project/list');
-                    projects.value = res.data;
-                };
-
-                const handleCreateProject = async () => {
-                    await axios.post('/project/create', projectForm);
-                    showProjectDialog.value = false;
-                    ElMessage.success('项目创建成功');
-                    loadProjects();
-                };
-
-                const enterProject = async (p) => {
-                    currentProject.value = p;
-                    currentView.value = 'board';
-                    loadBoard();
-                    initWebSocket(p.id);
-                };
-
-                const loadBoard = async () => {
-                    const res = await axios.get(`/task/board/${currentProject.value.id}`);
-                    boardData.value = res.data;
-                };
-
-                const openAddTask = () => {
-                    taskForm.name = ''; taskForm.description = '';
-                    showTaskDialog.value = true;
-                };
-
-                const handleCreateTask = async () => {
-                    await axios.post('/task/create', { ...taskForm, projectId: currentProject.value.id });
-                    showTaskDialog.value = false;
-                    loadBoard();
-                };
-
-                const moveTask = async (task, newStatus) => {
-                    await axios.post('/task/update', { taskId: task.id, status: newStatus });
-                    loadBoard();
-                };
-
-                const initWebSocket = (projectId) => {
-                    if (ws.value) ws.value.close();
-                    // 模拟 userId，生产环境应从 Token 解析
-                    const userId = Math.floor(Math.random() * 1000); 
-                    ws.value = new WebSocket(`ws://${location.host}/ws/${projectId}/${userId}`);
-                    ws.value.onmessage = (e) => {
-                        if (e.data === 'refresh') {
-                            ElNotification({ title: '实时同步', message: '看板内容已更新', type: 'info' });
-                            loadBoard();
-                        }
-                    };
-                };
-
-                const formatDate = (date) => {
-                    if(!date) return '-';
-                    return new Date(date).toLocaleString();
-                };
-
-                onMounted(() => { if(isLoggedIn.value) loadProjects(); });
+                onMounted(() => { if(isLoggedIn.value) { changeView('hall'); loadInvites(); } });
 
                 return {
-                    isLoggedIn, activeTab, loginForm, registerForm, loading,
-                    handleLogin, handleRegister, userInfo, projects, currentView,
-                    currentProject, enterProject, boardData, columns, showProjectDialog,
-                    projectForm, handleCreateProject, showTaskDialog, taskForm, openAddTask,
-                    handleCreateTask, moveTask, formatDate, handleCommand
+                    isLoggedIn, authTab, loading, view, activeMenu, userInfo, projects, invites, members, boardData,
+                    loginForm, regForm, projectForm, taskForm, inviteUsername, showAddProject, showAddTask, showInvite,
+                    currentTitle, columns, isOwner, fileInput,
+                    handleLogin, handleRegister, changeView, enterProject, doAddProject, doAddTask, moveTask, assignTask,
+                    doInvite, handleInvite, handleUserMenu, onFileChange
                 };
             }
-        });
-
-        app.use(ElementPlus);
-        for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
-            app.component(key, component);
-        }
-        app.mount('#app');
+        }).use(ElementPlus).component('Menu', ElementPlusIconsVue.Menu).component('Compass', ElementPlusIconsVue.Compass).component('Plus', ElementPlusIconsVue.Plus).component('Bell', ElementPlusIconsVue.Bell).component('Back', ElementPlusIconsVue.Back).component('ArrowRight', ElementPlusIconsVue.ArrowRight).component('ArrowLeft', ElementPlusIconsVue.ArrowLeft).component('User', ElementPlusIconsVue.User).component('UserFilled', ElementPlusIconsVue.UserFilled).mount('#app');
     </script>
 </body>
 </html>

@@ -7,6 +7,9 @@ import com.mule.demo.mapper.UserMapper;
 import com.mule.demo.service.UserService;
 
 import cn.hutool.crypto.digest.BCrypt;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.springframework.stereotype.Service;
 import com.mule.demo.model.dto.UserRegisterDTO;
@@ -45,7 +48,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return newUser;
     }
     @Override
-    public String login(UserLoginDTO userLoginDTO) {
+    public Map<String, Object> login(UserLoginDTO userLoginDTO) {
 
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getUsername, userLoginDTO.getUsername());
@@ -56,7 +59,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String token = JwtUtils.createToken(user.getId(), user.getUsername());
         String redisKey = "login:token:" + token;
         redisTemplate.opsForValue().set(redisKey, user.getId(), 24, TimeUnit.HOURS);
-        return token;
+        Map<String, Object> result = new HashMap<>();
+        result.put("token", token);
+        result.put("id", user.getId());
+        result.put("username", user.getUsername());
+        result.put("avatar", user.getAvatar());
+        return result;
     }
     @Override
     public String uploadAvatar(Long UserId,MultipartFile file) {

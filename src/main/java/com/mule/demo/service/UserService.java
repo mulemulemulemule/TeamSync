@@ -4,11 +4,14 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.mule.demo.entity.User;
 import com.mule.demo.model.dto.UserRegisterDTO;
 import com.mule.demo.model.dto.UserLoginDTO;
+
+import java.util.Map;
+
 import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService extends IService<User> {
 User register(UserRegisterDTO userRegisterDTO);
-String login(UserLoginDTO userLoginDTO);
+public Map<String, Object> login(UserLoginDTO userLoginDTO);
 String uploadAvatar(Long userId,MultipartFile file);
 void logout(String token);
 }

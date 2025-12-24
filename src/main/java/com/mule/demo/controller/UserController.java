@@ -40,11 +40,8 @@ public class UserController {
 
     @Operation(summary = "用户登录")
     @PostMapping("/login")
-    public Result<Map<String,String>> login(@RequestBody @Valid UserLoginDTO userLoginDTO) {
-        String token =userService.login(userLoginDTO);
-        Map<String, String> data = new HashMap<>();
-        data.put("token", token);
-        data.put("username", userLoginDTO.getUsername());
+    public Result<Map<String,Object>> login(@RequestBody @Valid UserLoginDTO userLoginDTO) {
+        Map<String, Object> data = userService.login(userLoginDTO);
         return Result.success(data);
     }
 
