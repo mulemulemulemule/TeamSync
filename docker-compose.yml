@@ -1,7 +1,27 @@
 version: '3.8'
 
 services:
-  # MySQL 数据库
+  # --- 1. Java 应用程序 ---
+  app:
+    build: .
+    container_name: teamsync-app
+    ports:
+      - "8080:8080"
+    environment:
+      # 通过环境变量覆盖 application.properties 里的配置，连接到 Docker 内部服务
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/teamsync?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - MINIO_ENDPOINT=http://minio:9000
+    depends_on:
+      - mysql
+      - redis
+      - rabbitmq
+      - minio
+    networks:
+      - teamsync-network
+
+  # --- 2. MySQL 数据库 ---
   mysql:
     image: mysql:8.0
     container_name: teamsync-mysql
@@ -15,7 +35,7 @@ services:
     networks:
       - teamsync-network
 
-  # Redis 缓存
+  # --- 3. Redis 缓存 ---
   redis:
     image: redis:latest
     container_name: teamsync-redis
@@ -24,23 +44,23 @@ services:
     networks:
       - teamsync-network
 
-  # RabbitMQ 消息队列
+  # --- 4. RabbitMQ 消息队列 ---
   rabbitmq:
     image: rabbitmq:3-management
     container_name: teamsync-rabbitmq
     ports:
-      - "5672:5672"   # API 端口
-      - "15672:15672" # 管理后台端口
+      - "5672:5672"
+      - "15672:15672"
     networks:
       - teamsync-network
 
-  # MinIO 对象存储
+  # --- 5. MinIO 对象存储 ---
   minio:
     image: minio/minio
     container_name: teamsync-minio
     ports:
-      - "9000:9000"   # API 端口
-      - "9001:9001"   # 控制台端口
+      - "9000:9000"
+      - "9001:9001"
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
