@@ -1,7 +1,7 @@
 package com.mule.demo.mapper;
 
 import com.mule.demo.entity.ProjectMember;
-import com.mule.demo.vo.ProjectMemberVO;
+import com.mule.demo.model.vo.ProjectMemberVO;
 
 import java.util.List;
 

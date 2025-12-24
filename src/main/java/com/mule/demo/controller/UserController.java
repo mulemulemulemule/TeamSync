@@ -18,7 +18,6 @@ import com.mule.demo.model.dto.UserRegisterDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import com.mule.demo.model.dto.UserLoginDTO;
 import java.util.Map;
-import java.util.HashMap;
 import org.springframework.web.multipart.MultipartFile;
 
 
