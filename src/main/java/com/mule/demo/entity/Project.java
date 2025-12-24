@@ -18,6 +18,8 @@ public class Project {
 
     private Long ownerId;
 
+    private Integer type;
+
     private String createTime;
 
     private String updateTime;

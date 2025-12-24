@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS `project` (
     `name` varchar(100) NOT NULL COMMENT '项目名称',
     `description` varchar(500) DEFAULT NULL COMMENT '项目描述',
     `owner_id` bigint(20) NOT NULL COMMENT '负责人ID(关联sys_user)',
+    `type` TINYINT DEFAULT 0 COMMENT '项目类型: 0-私有, 1-公开',
     `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `deleted` tinyint(1) DEFAULT 0 COMMENT '逻辑删除',

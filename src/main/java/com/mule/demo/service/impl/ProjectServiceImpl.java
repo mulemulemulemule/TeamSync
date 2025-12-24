@@ -26,27 +26,39 @@ import java.util.HashMap;
 
 @Service
 public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> implements ProjectService{
+
     @Autowired
     private ProjectMemberMapper projectMemberMapper;
+
     @Autowired
     private UserMapper userMapper;
+
     @Autowired
     private RabbitTemplate rabbitTemplate;
+
 @Override
 @Transactional
     public void createProject(ProjectCreateDTO dto) {
+
 LambdaQueryWrapper<Project> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Project::getName,dto.getName()).eq(Project::getOwnerId,dto.getOwnerId());
+
+    queryWrapper.eq(Project::getName,dto.getName()).eq(Project::getOwnerId,dto.getOwnerId());
       
         if (this.count(queryWrapper)>0) {
             throw new ServiceException("Project ... is already taken");
         }
+
         Project project = new Project();
+
         project.setName(dto.getName());
         project.setDescription(dto.getDescription());
         project.setOwnerId(dto.getOwnerId());
+        project.setType(dto.getType());
         this.save(project);
+
+
         ProjectMember projectMember = new ProjectMember();
+
         projectMember.setProjectId(project.getId());
         projectMember.setUserId(dto.getOwnerId());
         projectMember.setRole("OWNER");
@@ -57,23 +69,48 @@ LambdaQueryWrapper<Project> queryWrapper = new LambdaQueryWrapper<>();
 
     @Override
     public List<Project> listMyProjects(Long userId){
+
 List<Long> projectIds = projectMemberMapper.selectProjectIdsByUserIdAndStatus(userId, 1);
+
 if(projectIds.isEmpty()||projectIds==null){
+
     return Collections.emptyList();
+
 }
+
+
 LambdaQueryWrapper<Project> queryWrapper = new LambdaQueryWrapper<>();
+
 queryWrapper.in(Project::getId,projectIds).orderByDesc(Project::getCreateTime);
+
 return this.list(queryWrapper);
     }
+
+
+    @Override
+    public List<Project> listPublicProjects(){
+        LambdaQueryWrapper<Project> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Project::getType,1).orderByDesc(Project::getCreateTime);
+        return this.list(queryWrapper);
+    }
+
+    
     @Override
     public List<Project> listPendingInvites(Long userId){
         List<Long> projectIds = projectMemberMapper.selectProjectIdsByUserIdAndStatus(userId, 0);
+
 if(projectIds.isEmpty()||projectIds==null){
+
     return Collections.emptyList();
+
 }
+
 LambdaQueryWrapper<Project> queryWrapper = new LambdaQueryWrapper<>();
+
 queryWrapper.in(Project::getId,projectIds).orderByDesc(Project::getCreateTime);
+
 return this.list(queryWrapper);
+
     }
 
 

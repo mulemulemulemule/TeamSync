@@ -47,6 +47,12 @@ public class ProjectController {
 List<Project> projects = projectService.listMyProjects(userId);
         return Result.success(projects);
     }
+    @Operation(summary = "获取公开项目列表")
+    @GetMapping("/hall")
+    public Result<List<Project>> listPublicProjects() {
+        List<Project> projects = projectService.listPublicProjects();
+        return Result.success(projects);
+    }
     @Operation(summary = "获取待处理邀请列表")
     @GetMapping("/invite/list")
     public Result<List<Project>> listPendingInvites() {

@@ -13,9 +13,10 @@ import com.mule.demo.service.TaskService;
 import com.mule.demo.websocket.WebSocketServer;
 import com.mule.demo.common.UserContext;
 import com.mule.demo.entity.Project;
+import com.mule.demo.entity.ProjectMember;
 import com.mule.demo.model.dto.TaskUpdateDTO;
 import java.util.Map;
-
+import com.mule.demo.mapper.ProjectMemberMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 @Service
@@ -23,6 +24,8 @@ import org.springframework.stereotype.Service;
 public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements TaskService{
     @Autowired
      private ProjectMapper projectMapper;
+     @Autowired
+     private ProjectMemberMapper projectMemberMapper;
 @Override
     public void createTask(TaskCreateDTO dto) {
         Project project = projectMapper.selectById(dto.getProjectId());
@@ -56,6 +59,18 @@ LambdaQueryWrapper<Task> queryWrapper = new LambdaQueryWrapper<>();
     }
     @Override
     public Map<Integer,List<Task>> getTaskBoard(Long projectId) {
+        Project project = projectMapper.selectById(projectId);
+         if (project == null) throw new ServiceException("Project not found");
+         if(project.getType() == 0){
+            Long currentUserId = UserContext.getUserId();
+            LambdaQueryWrapper<ProjectMember> memberWrapper = new LambdaQueryWrapper<>();
+            memberWrapper.eq(ProjectMember::getProjectId, projectId)
+            .eq(ProjectMember::getUserId, currentUserId)
+            .eq(ProjectMember::getStatus, 1);
+            if (projectMemberMapper.selectCount(memberWrapper) == 0) {
+                throw new ServiceException("You are not a member of this project");
+            }
+         }
         LambdaQueryWrapper<Task> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Task::getProjectId, projectId).orderByDesc(Task::getCreateTime);
         List<Task> tasks = this.list(queryWrapper);

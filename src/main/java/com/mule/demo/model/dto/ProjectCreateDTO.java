@@ -17,7 +17,10 @@ public class ProjectCreateDTO {
 private String name;
 
 private String description;
+
 @Schema(hidden = true)
 private Long ownerId;
+
+private Integer type;
 }
 

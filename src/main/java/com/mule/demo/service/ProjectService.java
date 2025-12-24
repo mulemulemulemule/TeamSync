@@ -19,4 +19,6 @@ void inviteMember(Long currentUserId, ProjectInviteDTO dto);
 void handleInvite(Long currentUserId, InviteHandleDTO dto);
 
 public List<Project> listPendingInvites(Long userId);
+
+public List<Project> listPublicProjects();
 }
