@@ -5,6 +5,7 @@ import com.mule.demo.common.UserContext;
 import com.mule.demo.entity.Project;
 import com.mule.demo.model.dto.ProjectCreateDTO;
 import com.mule.demo.model.dto.ProjectInviteDTO;
+import com.mule.demo.model.dto.InviteHandleDTO;
 import com.mule.demo.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,12 +31,17 @@ public class ProjectController {
         return Result.success("create project success");
     }
 
-    @Operation(summary = "获取我的项目列表")
+    @Operation(summary = "获取我参与的项目列表")
     @GetMapping("/list")
     public Result<List<Project>> listMyProjects() {
         Long userId = UserContext.getUserId();
 List<Project> projects = projectService.listMyProjects(userId);
         return Result.success(projects);
+    }
+    @Operation(summary = "获取待处理邀请列表")
+    @GetMapping("/invite/list")
+    public Result<List<Project>> listPendingInvites() {
+        return Result.success(projectService.listPendingInvites(UserContext.getUserId()));
     }
     @Operation(summary = "邀请成员")
     @PostMapping("/invite")
@@ -45,5 +51,13 @@ List<Project> projects = projectService.listMyProjects(userId);
         return Result.success("invite success");
 
         
+    }
+    @Operation(summary = "处理邀请")
+    @PostMapping("/invite/handle")
+    public Result<String> handleInvite(@RequestBody @Valid InviteHandleDTO dto) {
+        Long currentUserId = UserContext.getUserId();
+         projectService.handleInvite(currentUserId, dto);
+         String msg = dto.getAccept() ? "success invite" : "refuse invite";
+         return Result.success(msg);
     }
 }

@@ -11,6 +11,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 @Mapper
 public interface ProjectMemberMapper extends BaseMapper<ProjectMember> {
-@Select("SELECT project_id FROM project_member WHERE user_id = #{userId}")
-List<Long> selectProjectIdsByUserId(Long userId);
+@Select("SELECT project_id FROM project_member WHERE user_id = #{userId} AND status = #{status}")
+List<Long> selectProjectIdsByUserIdAndStatus(Long userId, Integer status);
 }

@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.mule.demo.entity.ProjectMember;
 import com.mule.demo.entity.User;
 import com.mule.demo.model.dto.ProjectInviteDTO;
+import com.mule.demo.model.dto.InviteHandleDTO;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -56,7 +57,7 @@ LambdaQueryWrapper<Project> queryWrapper = new LambdaQueryWrapper<>();
 
     @Override
     public List<Project> listMyProjects(Long userId){
-List<Long> projectIds = projectMemberMapper.selectProjectIdsByUserId(userId);
+List<Long> projectIds = projectMemberMapper.selectProjectIdsByUserIdAndStatus(userId, 1);
 if(projectIds.isEmpty()||projectIds==null){
     return Collections.emptyList();
 }
@@ -64,6 +65,17 @@ LambdaQueryWrapper<Project> queryWrapper = new LambdaQueryWrapper<>();
 queryWrapper.in(Project::getId,projectIds).orderByDesc(Project::getCreateTime);
 return this.list(queryWrapper);
     }
+    @Override
+    public List<Project> listPendingInvites(Long userId){
+        List<Long> projectIds = projectMemberMapper.selectProjectIdsByUserIdAndStatus(userId, 0);
+if(projectIds.isEmpty()||projectIds==null){
+    return Collections.emptyList();
+}
+LambdaQueryWrapper<Project> queryWrapper = new LambdaQueryWrapper<>();
+queryWrapper.in(Project::getId,projectIds).orderByDesc(Project::getCreateTime);
+return this.list(queryWrapper);
+    }
+
 
 
     @Override
@@ -98,5 +110,23 @@ return this.list(queryWrapper);
         message.put("projectName", project.getName());
         message.put("UserId", user.getId());
         rabbitTemplate.convertAndSend(RabbitConfig.NOTIFY_QUEUE, message);
+    }
+
+    @Override
+    public void handleInvite(Long currentUserId, InviteHandleDTO dto) {
+        LambdaQueryWrapper<ProjectMember> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectMember::getProjectId, dto.getProjectId())
+        .eq(ProjectMember::getUserId, currentUserId)
+        .eq(ProjectMember::getStatus, 0);
+        ProjectMember projectMember = projectMemberMapper.selectOne(queryWrapper);
+        if (projectMember == null) {
+            throw new ServiceException("Invite not found");
+        }
+        if(dto.getAccept()){
+            projectMember.setStatus(1);
+            projectMemberMapper.updateById(projectMember);
+        }else{
+            projectMemberMapper.deleteById(projectMember.getId());
+        }
     }
 }
