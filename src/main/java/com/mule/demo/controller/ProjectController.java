@@ -7,11 +7,14 @@ import com.mule.demo.model.dto.ProjectCreateDTO;
 import com.mule.demo.model.dto.ProjectInviteDTO;
 import com.mule.demo.model.dto.InviteHandleDTO;
 import com.mule.demo.service.ProjectService;
+import com.mule.demo.vo.ProjectMemberVO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import com.mule.demo.mapper.ProjectMemberMapper;
 
 import java.util.List;
 
@@ -19,6 +22,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/project")
 public class ProjectController {
+    @Autowired
+    private ProjectMemberMapper projectMemberMapper;
 
     @Autowired
     private ProjectService projectService;
@@ -30,7 +35,11 @@ public class ProjectController {
         projectService.createProject(dto);
         return Result.success("create project success");
     }
-
+    @Operation(summary ="获取项目成员列表")
+    @GetMapping("/member/{projectId}")
+    public Result<List<ProjectMemberVO>> listMembers(@PathVariable Long projectId) {
+        return Result.success(projectMemberMapper.listProjectMembers(projectId));
+    }
     @Operation(summary = "获取我参与的项目列表")
     @GetMapping("/list")
     public Result<List<Project>> listMyProjects() {

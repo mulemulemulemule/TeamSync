@@ -11,6 +11,7 @@ import java.util.List;
 import com.mule.demo.model.dto.TaskCreateDTO;
 import com.mule.demo.service.TaskService;
 import com.mule.demo.websocket.WebSocketServer;
+import com.mule.demo.common.UserContext;
 import com.mule.demo.entity.Project;
 import com.mule.demo.model.dto.TaskUpdateDTO;
 import java.util.Map;
@@ -28,7 +29,10 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
         if (project == null) {
             throw new ServiceException("Project not found");
         }
-
+Long currentUserId = UserContext.getUserId();
+if (!project.getOwnerId().equals(currentUserId)) {
+            throw new ServiceException(403,"You are not the owner of the project");
+        }
 LambdaQueryWrapper<Task> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Task::getName,dto.getName()).eq(Task::getProjectId, dto.getProjectId());
        if (this.count(queryWrapper) > 0) {
@@ -62,6 +66,16 @@ LambdaQueryWrapper<Task> queryWrapper = new LambdaQueryWrapper<>();
         Task task = this.getById(dto.getTaskId());
         if (task == null) {
             throw new ServiceException("Task not found");
+        }
+        Project project = projectMapper.selectById(task.getProjectId());
+        Long currentUserId = UserContext.getUserId();
+        boolean isOwner = project.getOwnerId().equals(currentUserId);
+        boolean isAssignee = task.getAssigneeId() != null && task.getAssigneeId().equals(currentUserId);
+         if (!isOwner && !isAssignee) {
+            throw new ServiceException(403,"You have no permission to update this task");
+         }
+         if (dto.getAssigneeId() != null && !isOwner) {
+            throw new ServiceException(403,"You have no permission to assign this task");
         }
         Task updateTask = new Task();
         updateTask.setId(dto.getTaskId());
