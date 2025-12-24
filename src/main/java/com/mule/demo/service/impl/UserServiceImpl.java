@@ -68,7 +68,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
     @Override
     public String uploadAvatar(Long UserId,MultipartFile file) {
-
+        User oldUser = this.getById(UserId);
+        String oldAvatarUrl = oldUser.getAvatar();
         String url =minioUtils.upload(file);
         User user =new User();
         user.setId(UserId);
@@ -76,6 +77,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         boolean success=this.updateById(user);
         if(!success){
             throw new ServiceException("Failed to update user avatar");
+}
+if (oldAvatarUrl != null && !oldAvatarUrl.isEmpty()) {
+    minioUtils.removeFile(oldAvatarUrl);
 }
         return url;
     }

@@ -50,4 +50,16 @@ public class MinioUtils {
     }
 
     }
+    public void removeFile(String fileUrl) {
+        try {
+            if (fileUrl == null || fileUrl.isEmpty()) return;
+            String objectName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+            minioClient.removeObject(io.minio.RemoveObjectArgs.builder()
+            .bucket(minioConfig.getBucketName())
+            .object(objectName).build());
+            log.info("clean{}",objectName);
+        } catch (Exception e) {
+            log.error("file remove error: ", e);
+        }
+    }
 }
