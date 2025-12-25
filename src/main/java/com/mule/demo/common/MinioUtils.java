@@ -41,8 +41,8 @@ public class MinioUtils {
                              .build()
              );
         }
-        // 返回文件访问路径
-        return minioConfig.getEndpoint()+"/"+minioConfig.getBucketName()+"/"+objectName;
+        // 返回文件访问路径，使用公网 Endpoint 供前端访问
+        return minioConfig.getPublicEndpoint()+"/"+minioConfig.getBucketName()+"/"+objectName;
     } catch (Exception e) {
         log.error("file upload error: ", e);
         throw new ServiceException("file upload error");
