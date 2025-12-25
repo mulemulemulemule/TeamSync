@@ -42,7 +42,15 @@ public class MinioUtils {
              );
         }
         // 返回文件访问路径，使用公网 Endpoint 供前端访问
-        return minioConfig.getPublicEndpoint()+"/"+minioConfig.getBucketName()+"/"+objectName;
+        String endpoint = minioConfig.getPublicEndpoint();
+        if (!endpoint.startsWith("http://") && !endpoint.startsWith("https://")) {
+            if (endpoint.contains("localhost") || endpoint.contains("127.0.0.1")) {
+                endpoint = "http://" + endpoint;
+            } else {
+                endpoint = "https://" + endpoint;
+            }
+        }
+        return endpoint + "/" + minioConfig.getBucketName() + "/" + objectName;
     } catch (Exception e) {
         log.error("file upload error: ", e);
         throw new ServiceException("file upload error");
