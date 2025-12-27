@@ -2,6 +2,7 @@ package com.mule.demo.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.mule.demo.common.UserContext;
 import com.mule.demo.entity.Project;
 import com.mule.demo.entity.ProjectMember;
 import com.mule.demo.entity.User;
@@ -13,12 +14,16 @@ import com.mule.demo.model.dto.ProjectCreateDTO;
 import com.mule.demo.model.dto.ProjectInviteDTO;
 import com.mule.demo.model.dto.InviteHandleDTO;
 import com.mule.demo.model.vo.ProjectMemberVO;
+import com.mule.demo.model.vo.ProjectVO;
 import com.mule.demo.service.RabbitMQService;
 import com.mule.demo.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.mule.demo.service.RedisService;
+import cn.hutool.core.util.StrUtil;
+import org.springframework.beans.BeanUtils;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -31,6 +36,8 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
     private UserMapper userMapper;
     @Autowired
     private RabbitMQService rabbitMQService;
+    @Autowired
+    private RedisService redisService;
 
     @Override
     @Transactional
@@ -51,9 +58,14 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
     }
 
     @Override
-    public List<Project> listMyProjects(Long userId) {
+    public List<ProjectVO> listMyProjects(Long userId) {
         List<Long> ids = projectMemberMapper.selectProjectIdsByUserIdAndStatus(userId, 1);
-        return ids.isEmpty() ? Collections.emptyList() : this.list(new LambdaQueryWrapper<Project>().in(Project::getId, ids).orderByDesc(Project::getCreateTime));
+    if (ids.isEmpty()) return new ArrayList<>();
+    LambdaQueryWrapper<Project> wrapper = new LambdaQueryWrapper<>();
+    wrapper.in(Project::getId, ids).orderByDesc(Project::getCreateTime);
+    List<Project> projects = this.list(wrapper);
+    return convertToVO(projects);
+    
     }
 
     @Override
@@ -62,9 +74,29 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
         return ids.isEmpty() ? Collections.emptyList() : this.list(new LambdaQueryWrapper<Project>().in(Project::getId, ids).orderByDesc(Project::getCreateTime));
     }
 
+    //私有方法转换vo
+    private List<ProjectVO> convertToVO(List<Project> projects){
+        List<ProjectVO> voList = new ArrayList<>();
+         Long currentUserId = UserContext.getUserId();
+         for (Project p : projects) {
+ProjectVO vo = new ProjectVO();
+BeanUtils.copyProperties(p, vo);
+Double score = redisService.getZScore("project:rank", p.getId());
+vo.setLikeCount(score == null ? 0 : score.longValue());
+boolean isLiked = redisService.sHasKey("project:like:detail:" + p.getId(), currentUserId);
+vo.setIsLiked(isLiked);
+voList.add(vo);
+         }
+         return voList;
+    }
+
     @Override
-    public List<Project> listPublicProjects() {
-        return this.list(new LambdaQueryWrapper<Project>().eq(Project::getType, 1).orderByDesc(Project::getCreateTime));
+    public List<ProjectVO> listPublicProjects(String keyword) {
+        LambdaQueryWrapper<Project> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Project::getType, "1").orderByDesc(Project::getCreateTime);
+        if(StrUtil.isNotBlank(keyword)) wrapper.like(Project::getName, keyword);
+        List<Project> projects =this.list(wrapper);
+        return convertToVO(projects);
     }
 
     @Override
@@ -96,4 +128,20 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
     public List<ProjectMemberVO> listMembers(Long projectId) {
         return projectMemberMapper.listProjectMembers(projectId);
     }
+
+    @Override
+    public void toggleLike(Long projectId){
+Long userId= UserContext.getUserId();
+String detailkey = "project:like:detail:" + projectId;
+String rankKey = "project:rank";
+if(redisService.sHasKey(detailkey, userId)){
+    redisService.sRemove(detailkey, userId);
+    redisService.zIncr(rankKey, projectId, -1);
 }
+else{
+    redisService.sSet(detailkey, userId);
+    redisService.zIncr(rankKey, projectId, 1);
+}
+}
+    }
+

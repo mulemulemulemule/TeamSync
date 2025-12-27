@@ -8,12 +8,13 @@ import com.mule.demo.model.dto.InviteHandleDTO;
 import com.mule.demo.model.dto.ProjectCreateDTO;
 import com.mule.demo.model.dto.ProjectInviteDTO;
 import com.mule.demo.model.vo.ProjectMemberVO;
+import com.mule.demo.model.vo.ProjectVO;
 
 public interface ProjectService extends IService<Project> {
 
     void createProject(ProjectCreateDTO createDTO);
 
-    public List<Project> listMyProjects(Long userId);
+    public List<ProjectVO> listMyProjects(Long userId);
 
 void inviteMember(Long currentUserId, ProjectInviteDTO dto);
 
@@ -21,6 +22,7 @@ void handleInvite(Long currentUserId, InviteHandleDTO dto);
 
 public List<Project> listPendingInvites(Long userId);
 
-public List<Project> listPublicProjects();
+public List<ProjectVO> listPublicProjects(String keyword);
 public List<ProjectMemberVO> listMembers(Long projectId);
+public void toggleLike(Long projectId);
 }
