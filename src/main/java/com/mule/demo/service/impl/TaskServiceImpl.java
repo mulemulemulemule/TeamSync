@@ -4,10 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import java.util.stream.Collectors;
 import com.mule.demo.entity.Task;
+import com.mule.demo.entity.TaskComment;
 import com.mule.demo.exception.ServiceException;
 import com.mule.demo.mapper.ProjectMapper;
 import com.mule.demo.mapper.TaskMapper;
 import java.util.List;
+
+import com.mule.demo.model.dto.TaskCommentDTO;
 import com.mule.demo.model.dto.TaskCreateDTO;
 import com.mule.demo.service.TaskService;
 import com.mule.demo.websocket.WebSocketServer;
@@ -17,10 +20,12 @@ import com.mule.demo.entity.ProjectMember;
 import com.mule.demo.model.dto.TaskUpdateDTO;
 import java.util.Map;
 import com.mule.demo.mapper.ProjectMemberMapper;
+import com.mule.demo.mapper.TaskCommentMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import com.mule.demo.service.MinioService;
+import com.mule.demo.model.vo.TaskCommentVO;
 @Service
 
 public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements TaskService{
@@ -30,6 +35,8 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
      private ProjectMemberMapper projectMemberMapper;
      @Autowired
      private MinioService minioService;
+     @Autowired
+     private TaskCommentMapper commentMapper;
 @Override
     public void createTask(TaskCreateDTO dto) {
         Project project = projectMapper.selectById(dto.getProjectId());
@@ -138,5 +145,35 @@ LambdaQueryWrapper<Task> queryWrapper = new LambdaQueryWrapper<>();
           WebSocketServer.sendInfo(task.getProjectId(), "refresh");
           return newUrl;
     }
+    @Override
+     public void addComment(TaskCommentDTO dto) {
+         Long currentUserId = UserContext.getUserId();
+        TaskComment comment = new TaskComment();
+        comment.setTaskId(dto.getTaskId());
+        comment.setUserId(currentUserId);
+        comment.setContent(dto.getContent());
+         commentMapper.insert(comment);
+         Task task = this.getById(dto.getTaskId());
+         if(task!= null){
+             WebSocketServer.sendInfo(task.getProjectId(), "refresh");
+         }
+    }
+    @Override
+    public List<TaskCommentVO> listComments(Long taskId) {
+        return commentMapper.selectCommentsByTaskId(taskId);
+    }
+    @Override
+    public void deleteComment(Long commentId) {
+        TaskComment comment = commentMapper.selectById(commentId);
+        if (comment == null) return;
+        Long currentUserId = UserContext.getUserId();
+        if (!currentUserId.equals(comment.getUserId())) {
+            throw new ServiceException(403,"You have no permission to delete this comment");
+        }
+        commentMapper.deleteById(commentId);
+        Task task = this.getById(comment.getTaskId());
+        WebSocketServer.sendInfo(task.getProjectId(), "comment:" + task.getId());
+    }
+    
     }
 

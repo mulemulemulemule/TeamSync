@@ -6,7 +6,9 @@ import java.util.Map;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.mule.demo.model.dto.TaskUpdateDTO;
+import com.mule.demo.model.vo.TaskCommentVO;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.mule.demo.model.dto.TaskCommentDTO;
 import com.mule.demo.model.dto.TaskCreateDTO;
 import com.mule.demo.entity.Task;
 public interface TaskService extends IService<Task>{
@@ -16,4 +18,8 @@ Map<Integer, List<Task>> getTaskBoard(Long projectId);
 void updateTask(TaskUpdateDTO updateDTO);
 
 public String uploadTaskFile(Long taskId, MultipartFile file);
+void addComment(TaskCommentDTO dto);
+
+List<TaskCommentVO> listComments(Long taskId);
+void deleteComment(Long commentId);
 }

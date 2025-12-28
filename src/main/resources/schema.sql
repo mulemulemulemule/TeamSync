@@ -53,3 +53,14 @@ CREATE TABLE IF NOT EXISTS `project` (
          PRIMARY KEY (`id`),
          UNIQUE KEY `uk_project_user` (`project_id`, `user_id`) -- 保证一个人在一个项目里只能加入一次
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='项目成员表';
+
+    -- 任务评论表
+       CREATE TABLE IF NOT EXISTS `task_comment` (
+        `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+        `task_id` bigint(20) NOT NULL COMMENT '任务ID',
+        `user_id` bigint(20) NOT NULL COMMENT '评论人ID',
+        `content` varchar(1000) NOT NULL COMMENT '评论内容',
+        `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '评论时间',
+        PRIMARY KEY (`id`),
+        INDEX `idx_task` (`task_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='任务评论表';

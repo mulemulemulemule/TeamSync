@@ -69,4 +69,10 @@ public static void sendInfo(Long projectId, String message) {
         
     }
 }
+//实时聊天（未实现）
+@OnMessage
+public void onMessage(String message, Session session, @PathParam("projectId") Long projectId) {
+    log.info("receive message from client: {}", session.getId(), message);
+    sendInfo(projectId, message);
+}
 }

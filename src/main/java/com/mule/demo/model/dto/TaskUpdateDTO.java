@@ -11,6 +11,8 @@ public class TaskUpdateDTO {
     @NotNull(message = "TaskId cannot be empty")
     private Long taskId;
 
+    private String name;
+
     private Integer status;
 
     private Long assigneeId;
