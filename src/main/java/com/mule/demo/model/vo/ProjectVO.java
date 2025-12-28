@@ -1,6 +1,6 @@
 package com.mule.demo.model.vo;
 
-import com.baomidou.mybatisplus.annotation.TableLogic;
+import java.time.LocalDateTime;
 
 import lombok.Data;
 
@@ -12,7 +12,11 @@ private Long id;
 
     private String description;
 
+    private Long ownerId;
+
     private Integer type;
+
+    private LocalDateTime createTime;
 
     private Long likeCount;
     

@@ -9,4 +9,7 @@ public interface RedisService {
     public long sSet(String key, Object... values);
     public long sRemove(String key, Object... values);
     public Double zIncr(String key, Object member, double score);
+    public Boolean delete(String key);
+    public Long zRemove(String key, Object... members);
+
 }

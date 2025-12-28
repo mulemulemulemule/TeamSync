@@ -3,6 +3,8 @@ package com.mule.demo.controller;
 import com.mule.demo.common.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.mule.demo.service.TaskService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,5 +40,11 @@ taskService.createTask(dto);
     public Result<String> updateTask(@RequestBody @Valid TaskUpdateDTO dto) {
         taskService.updateTask(dto);
         return Result.success("update success");
+    }
+    @Operation(summary ="上传任务文件")
+    @PostMapping("/upload/file/{taskId}")
+    public Result<String> uploadTaskFile(@PathVariable Long taskId, @RequestParam MultipartFile file) {
+         if (file.isEmpty()) return Result.error("file is empty");
+        return Result.success(taskService.uploadTaskFile(taskId, file));
     }
 }

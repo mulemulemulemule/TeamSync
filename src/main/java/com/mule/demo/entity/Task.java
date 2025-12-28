@@ -29,4 +29,8 @@ public class Task {
     
     @TableLogic
     private Integer deleted;
+
+    private String fileUrl;
+    
+    private String fileName; 
 }

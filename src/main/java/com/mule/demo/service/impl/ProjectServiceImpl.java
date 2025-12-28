@@ -6,12 +6,15 @@ import com.mule.demo.common.UserContext;
 import com.mule.demo.entity.Project;
 import com.mule.demo.entity.ProjectMember;
 import com.mule.demo.entity.User;
+import com.mule.demo.entity.Task;
 import com.mule.demo.exception.ServiceException;
 import com.mule.demo.mapper.ProjectMapper;
 import com.mule.demo.mapper.ProjectMemberMapper;
+import com.mule.demo.mapper.TaskMapper;
 import com.mule.demo.mapper.UserMapper;
 import com.mule.demo.model.dto.ProjectCreateDTO;
 import com.mule.demo.model.dto.ProjectInviteDTO;
+import com.mule.demo.model.dto.ProjectTypeDTO;
 import com.mule.demo.model.dto.InviteHandleDTO;
 import com.mule.demo.model.vo.ProjectMemberVO;
 import com.mule.demo.model.vo.ProjectVO;
@@ -38,6 +41,8 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
     private RabbitMQService rabbitMQService;
     @Autowired
     private RedisService redisService;
+    @Autowired
+    private TaskMapper taskMapper;
 
     @Override
     @Transactional
@@ -143,5 +148,37 @@ else{
     redisService.zIncr(rankKey, projectId, 1);
 }
 }
+
+    @Override
+    @Transactional
+    public void deleteProject(Long projectId) {
+        Long currentUserId = UserContext.getUserId();
+        Project project = this.getById(projectId);
+        if(project==null) throw new ServiceException("Project not found");
+        if(!project.getOwnerId().equals(currentUserId)) throw new ServiceException(403, "Forbidden");
+
+        LambdaQueryWrapper<Task> taskWrapper = new LambdaQueryWrapper<>();
+        taskWrapper.eq(Task::getProjectId, projectId);
+        taskMapper.delete(taskWrapper);
+
+        LambdaQueryWrapper<ProjectMember> memberWrapper = new LambdaQueryWrapper<>();
+        memberWrapper.eq(ProjectMember::getProjectId, projectId);
+        projectMemberMapper.delete(memberWrapper);
+
+        redisService.delete("project:like:detail:" + projectId);
+        redisService.zRemove("project:rank", projectId);
+
+        this.removeById(projectId);
+    }
+
+    @Override
+    public void updateProjectType(ProjectTypeDTO dto) {
+        Project project = this.getById(dto.getId());
+        if(project==null) throw new ServiceException("Project not found");
+        if (!project.getOwnerId().equals(UserContext.getUserId())) throw new ServiceException(403, "only owner can change project type");
+        project.setType(dto.getType());
+        this.updateById(project);
+        
+    }
     }
 

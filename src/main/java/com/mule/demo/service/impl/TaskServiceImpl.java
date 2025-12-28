@@ -19,6 +19,8 @@ import java.util.Map;
 import com.mule.demo.mapper.ProjectMemberMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import com.mule.demo.service.MinioService;
 @Service
 
 public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements TaskService{
@@ -26,6 +28,8 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
      private ProjectMapper projectMapper;
      @Autowired
      private ProjectMemberMapper projectMemberMapper;
+     @Autowired
+     private MinioService minioService;
 @Override
     public void createTask(TaskCreateDTO dto) {
         Project project = projectMapper.selectById(dto.getProjectId());
@@ -106,6 +110,33 @@ LambdaQueryWrapper<Task> queryWrapper = new LambdaQueryWrapper<>();
         }
         this.updateById(updateTask);
         WebSocketServer.sendInfo(task.getProjectId(), "update task,refresh");
+    }
+    @Override
+    public String uploadTaskFile(Long taskId, MultipartFile file) {
+        Task task = this.getById(taskId);
+        if (task == null) {
+            throw new ServiceException("Task not found");
+        }
+        Long currentUserId = UserContext.getUserId();
+        Project project = projectMapper.selectById(task.getProjectId());
+        boolean isOwner = project.getOwnerId().equals(currentUserId);
+        boolean isAssignee = currentUserId.equals(task.getAssigneeId());
+         if (!isOwner && !isAssignee) {
+             throw new ServiceException(403,"You have no permission to upload file");
+         }
+         String oldFileUrl = task.getFileUrl();
+          String newUrl =minioService.upload(file);
+          String originalFilename = file.getOriginalFilename();
+          Task updateTask = new Task();
+          updateTask.setId(taskId);
+          updateTask.setFileUrl(newUrl);
+          updateTask.setFileName(originalFilename);
+          this.updateById(updateTask);
+          if (oldFileUrl != null&&!oldFileUrl.isEmpty()) {
+              minioService.delete(oldFileUrl);
+          }
+          WebSocketServer.sendInfo(task.getProjectId(), "refresh");
+          return newUrl;
     }
     }
 

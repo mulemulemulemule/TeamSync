@@ -41,6 +41,9 @@ services:
     container_name: teamsync-redis
     ports:
       - "6379:6379"
+    volumes:
+      - ./docker/redis/data:/data
+    command: redis-server --appendonly yes
     networks:
       - teamsync-network
 

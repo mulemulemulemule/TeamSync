@@ -6,6 +6,7 @@ import com.mule.demo.entity.Project;
 import com.mule.demo.model.dto.ProjectCreateDTO;
 import com.mule.demo.model.dto.ProjectInviteDTO;
 import com.mule.demo.model.dto.InviteHandleDTO;
+import com.mule.demo.model.dto.ProjectTypeDTO;
 import com.mule.demo.service.ProjectService;
 import com.mule.demo.model.vo.ProjectMemberVO;
 
@@ -73,5 +74,18 @@ return Result.success(projectService.listPublicProjects(keyword));
          projectService.handleInvite(currentUserId, dto);
          String msg = dto.getAccept() ? "success invite" : "refuse invite";
          return Result.success(msg);
+    }
+    @Operation(summary = "删除项目")
+    @DeleteMapping("/{projectId}")
+    public Result<String> deleteProject(@PathVariable Long projectId) {
+        projectService.deleteProject(projectId);
+        return Result.success("delete project success");
+    }
+    @Operation(summary = "更新项目可见信息")
+    @PostMapping("/type")
+     public Result<String> updateType(@RequestBody ProjectTypeDTO dto) {
+        projectService.updateProjectType(dto);
+        return Result.success("update project type success");
+        
     }
 }

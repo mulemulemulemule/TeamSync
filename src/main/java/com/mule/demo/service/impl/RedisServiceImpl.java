@@ -1,8 +1,6 @@
 package com.mule.demo.service.impl;
 
 import com.mule.demo.service.RedisService;
-
-import org.simpleframework.xml.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -60,5 +58,14 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public Double zIncr(String key, Object member, double score) {
         return redisTemplate.opsForZSet().incrementScore(key, member, score);
+    }
+    @Override
+    public Boolean delete(String key) {
+        return redisTemplate.delete(key);
+    }   
+
+    @Override
+    public Long zRemove(String key, Object... members) {
+        return redisTemplate.opsForZSet().remove(key, members);
     }
 }

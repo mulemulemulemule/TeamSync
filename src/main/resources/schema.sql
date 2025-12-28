@@ -36,6 +36,8 @@ CREATE TABLE IF NOT EXISTS `project` (
     `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `deleted` tinyint(1) DEFAULT 0 COMMENT '逻辑删除',
+    `file_url` VARCHAR(500) DEFAULT NULL COMMENT '附件地址',
+    `file_name` VARCHAR(100) DEFAULT NULL COMMENT '附件原始名',
     PRIMARY KEY (`id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='任务表';
 
