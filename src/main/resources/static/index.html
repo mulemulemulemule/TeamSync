@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TeamSync Pro</title>
+    <title>TeamSync</title>
     <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/element-plus"></script>
@@ -57,7 +57,7 @@
         <!-- 登录 (略) -->
         <div v-if="!isLoggedIn" class="login-bg">
             <el-card class="login-card">
-                <h2 style="text-align: center; color: #F56C6C;">TeamSync Pro</h2>
+                <h2 style="text-align: center; color: #F56C6C;">TeamSync</h2>
                 <el-tabs v-model="authTab" stretch>
                     <el-tab-pane label="登录" name="login">
                         <el-form :model="loginForm"><el-form-item><el-input v-model="loginForm.username" placeholder="用户名" prefix-icon="User"></el-input></el-form-item><el-form-item><el-input v-model="loginForm.password" type="password" placeholder="密码" prefix-icon="Lock"></el-input></el-form-item><el-button type="danger" style="width: 100%" @click="handleLogin">进 去</el-button></el-form>
