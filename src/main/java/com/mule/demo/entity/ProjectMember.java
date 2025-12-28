@@ -1,4 +1,6 @@
 package com.mule.demo.entity;
+import java.time.LocalDateTime;
+
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 @Data
@@ -15,7 +17,7 @@ public class ProjectMember {
 
     private Integer status;
 
-    private String createTime;
+    private LocalDateTime createTime;
 
 
 

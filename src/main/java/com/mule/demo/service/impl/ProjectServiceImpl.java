@@ -100,8 +100,18 @@ voList.add(vo);
         LambdaQueryWrapper<Project> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Project::getType, "1").orderByDesc(Project::getCreateTime);
         if(StrUtil.isNotBlank(keyword)) wrapper.like(Project::getName, keyword);
+        
         List<Project> projects =this.list(wrapper);
-        return convertToVO(projects);
+
+        List<ProjectVO> voList = convertToVO(projects);
+        voList.sort((p1, p2) -> {
+        int likeCompare = Long.compare(p2.getLikeCount(), p1.getLikeCount());
+        if (likeCompare != 0) {
+            return likeCompare;
+        }
+        return p2.getCreateTime().compareTo(p1.getCreateTime());
+        });
+        return voList;
     }
 
     @Override
