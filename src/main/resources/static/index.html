@@ -278,7 +278,23 @@
                 const onTaskFileChange = async (e) => { const file = e.target.files[0]; if(!file) return; const fd = new FormData(); fd.append('file', file); await axios.post(`/task/upload/file/${currentTask.id}`, fd); currentTask.fileUrl = 'loading...'; ElMessage.success('传了'); loadBoard(currentProject.value.id); showTaskDetail.value=false; };
                 const scrollToBottom = () => { nextTick(() => { if(commentRef.value) commentRef.value.scrollTop = commentRef.value.scrollHeight; }); };
                 const formatDate = (d) => d ? new Date(d).toLocaleString() : '';
-                const initWS = (pid) => { if(ws.value) ws.value.close(); ws.value = new WebSocket(`ws://${location.host}/ws/${pid}/${parseInt(userInfo.id)}`); ws.value.onmessage = (e) => { if (e.data.startsWith('comment:')) { const tid = e.data.split(':')[1]; if (showTaskDetail.value && currentTask.id == tid) loadComments(tid); } else if (e.data.includes('refresh')) loadBoard(pid); }; };
+                                // WebSocket 自动适配 HTTPS
+                const initWS = (pid) => {
+                    if(ws.value) ws.value.close();
+                    const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+                    ws.value = new WebSocket(`${protocol}://${location.host}/ws/${pid}/${parseInt(userInfo.id)}`);
+                    ws.value.onmessage = (e) => {
+                        // ... (后续逻辑保持不变)
+                        if (e.data.startsWith('{')) {
+                            const msg = JSON.parse(e.data);
+                            chatMessages.value.push(msg);
+                            nextTick(() => { if(chatContentRef.value) chatContentRef.value.scrollTop = chatContentRef.value.scrollHeight; });
+                        } else if (e.data.includes('refresh')) {
+                            ElNotification({ title: '同步', message: '看板更新', type: 'info', position: 'bottom-right' });
+                            loadBoard(pid);
+                        }
+                    };
+                };
 
                 onMounted(() => { if(isLoggedIn.value) { changeView('hall'); loadInvites(); } });
 
